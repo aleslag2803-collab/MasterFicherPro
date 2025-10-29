@@ -7,11 +7,103 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Usuarios {
+  idUsuario      Int       @id @default(autoincrement())
+  nombre         String
+  correo         String     @unique
+  passwordHash   String
+  rol            String
+  estado         Boolean    @default(true)
+  fechaRegistro  DateTime   @default(now())
 
-model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  createdAt DateTime @default(now())
+  documentos     Documentos[]
+  permisos       Permisos[]
+  organizacion   Organizacion[]
+  cuestionarios  CuestionarioIA[]
+  historial      HistorialAcciones[]
+  notificaciones Notificaciones[]
 }
 
+model Documentos {
+  idDocumento          Int       @id @default(autoincrement())
+  idUsuarioPropietario Int
+  nombreArchivo        String
+  tipoArchivo          String
+  rutaArchivo          String
+  fechaSubida          DateTime  @default(now())
+  version              String?
+  estado               String
+  etiquetas            String?
+  resumen              String?
+
+  usuarioPropietario   Usuarios  @relation(fields: [idUsuarioPropietario], references: [idUsuario])
+  permisos             Permisos[]
+  historial            HistorialAcciones[]
+  versiones            VersionesDocumento[]
+}
+
+model Permisos {
+  idPermiso       Int      @id @default(autoincrement())
+  idUsuario       Int
+  idDocumento     Int
+  tipoAcceso      String
+  fechaAsignacion DateTime @default(now())
+
+  usuario         Usuarios  @relation(fields: [idUsuario], references: [idUsuario])
+  documento       Documentos @relation(fields: [idDocumento], references: [idDocumento])
+}
+
+model Organizacion {
+  idOrganizacion  Int       @id @default(autoincrement())
+  idUsuario       Int
+  nombreCarpeta   String
+  nivelJerarquico Int
+  padreId         Int?
+  fechaCreacion   DateTime  @default(now())
+
+  usuario         Usuarios    @relation(fields: [idUsuario], references: [idUsuario])
+  padre           Organizacion? @relation("Jerarquia", fields: [padreId], references: [idOrganizacion])
+  hijos           Organizacion[] @relation("Jerarquia")
+}
+
+model CuestionarioIA {
+  idCuestionario  Int      @id @default(autoincrement())
+  idUsuario       Int
+  pregunta        String
+  respuesta       String
+  fechaRespuesta  DateTime @default(now())
+
+  usuario         Usuarios @relation(fields: [idUsuario], references: [idUsuario])
+}
+
+model HistorialAcciones {
+  idHistorial    Int      @id @default(autoincrement())
+  idUsuario      Int
+  idDocumento    Int
+  accion         String
+  fechaAccion    DateTime @default(now())
+  detalle        String?
+
+  usuario        Usuarios  @relation(fields: [idUsuario], references: [idUsuario])
+  documento      Documentos @relation(fields: [idDocumento], references: [idDocumento])
+}
+
+model VersionesDocumento {
+  idVersion      Int      @id @default(autoincrement())
+  idDocumento    Int
+  numeroVersion  String
+  rutaArchivo    String
+  fechaVersion   DateTime @default(now())
+
+  documento      Documentos @relation(fields: [idDocumento], references: [idDocumento])
+}
+
+model Notificaciones {
+  idNotificacion Int      @id @default(autoincrement())
+  idUsuario      Int
+  mensaje        String
+  leido          Boolean  @default(false)
+  fechaEnvio     DateTime @default(now())
+
+  usuario        Usuarios @relation(fields: [idUsuario], references: [idUsuario])
+}
