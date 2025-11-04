@@ -1,9 +1,10 @@
 "use client"
 
+import { cn } from "@/src/lib/utils"
 import { FileText, Building2, Brain, Shield, Users, Settings } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
+
 
 const menuItems = [
   { icon: FileText, label: "Dashboard", href: "/" },
