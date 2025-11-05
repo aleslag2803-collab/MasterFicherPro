@@ -7,16 +7,16 @@ import { usePathname } from "next/navigation"
 
 
 const menuItems = [
-  { icon: FileText, label: "Dashboard", href: "/" },
-  { icon: FileText, label: "Documentos", href: "/documentos" },
-  { icon: Building2, label: "Organizaciones", href: "/organizaciones" },
-  { icon: Brain, label: "Herramienta IA", href: "/herramienta-ia" },
-  { icon: Shield, label: "Auditoría", href: "/auditoria" },
-  { icon: Users, label: "Usuarios", href: "/usuarios" },
-  { icon: Settings, label: "Configuración", href: "/configuracion" },
+  { icon: FileText, label: "Dashboard", href: "/Dashboard/dashboard" },
+  { icon: FileText, label: "Documentos", href: "/Dashboard/documentos" },
+  { icon: Building2, label: "Organizaciones", href: "/Dashboard/organizaciones" },
+  { icon: Brain, label: "Herramienta IA", href: "/Dashboard/herramienta-ia" },
+  { icon: Shield, label: "Auditoría", href: "/Dashboard/auditoria" },
+  { icon: Users, label: "Usuarios", href: "/Dashboard/usuarios" },
+  { icon: Settings, label: "Configuración", href: "/Dashboard/configuracion" },
 ]
 
-export function Sidebar() {
+export default function Sidebar() {
   const pathname = usePathname()
 
   return (

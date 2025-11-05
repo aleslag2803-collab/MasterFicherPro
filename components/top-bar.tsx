@@ -4,7 +4,7 @@ import { Search, Bell, User } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
-export function TopBar() {
+export default function TopBar() {
   return (
     <header className="h-16 bg-white border-b border-border flex items-center justify-between px-8">
       <div className="flex-1 max-w-xl">
