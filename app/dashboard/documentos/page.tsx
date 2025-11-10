@@ -1,8 +1,11 @@
-export default function DocumentosPage() {
+import { DocumentsTable } from "@/components/documentos/documentos-table"
+import { DocumentsHeader } from "@/components/documentos/documentos-header"
+
+export default function DocumentsPage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Gestión de Documentos</h1>
-      <p>Aquí podrás crear, ver y editar documentos.</p>
+    <div className="space-y-6">
+      <DocumentsHeader />
+      <DocumentsTable />
     </div>
-  );
+  )
 }
