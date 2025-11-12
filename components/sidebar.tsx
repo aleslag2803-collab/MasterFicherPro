@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation"
 
 
 const menuItems = [
-  { icon: FileText, label: "Dashboard", href: "/dashboard" },
+  { icon: FileText, label: "Dashboard", href: "/dashboard/dashboard" },
   { icon: FileText, label: "Documentos", href: "/documentos" },
   { icon: Building2, label: "Organizaciones", href: "/organizaciones" },
   { icon: Brain, label: "Herramienta IA", href: "/chat-ia" },
