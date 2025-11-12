@@ -4,7 +4,7 @@ import { Mail, MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface User {
-  id: number
+  idUsuario: string
   initials: string
   name: string
   email: string
@@ -47,7 +47,7 @@ export default function UsersTable({ users }: UsersTableProps) {
           </thead>
           <tbody>
             {users.map((user, index) => (
-              <tr key={user.id} className={index !== users.length - 1 ? "border-b border-border" : ""}>
+             <tr key={user.idUsuario || index} className={index !== users.length - 1 ? "border-b border-border" : ""}>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
