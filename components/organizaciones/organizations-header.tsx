@@ -11,7 +11,7 @@ export function OrganizationsHeader() {
           <h2 className="text-3xl font-bold tracking-tight text-foreground">Organizaciones</h2>
           <p className="text-muted-foreground">Gestiona las organizaciones del sistema</p>
         </div>
-        <Link href="/Dashboard/organizaciones/nueva">
+        <Link href="/organizaciones/nueva">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             Nueva Organización

@@ -19,9 +19,8 @@ export function NewOrganizationForm() {
     e.preventDefault()
     setIsLoading(true)
 
-    // TODO: Implement organization creation
     setTimeout(() => {
-      router.push("/organizations")
+      router.push("/organizaciones")
     }, 1000)
   }
 
