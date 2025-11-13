@@ -8,7 +8,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/documentos">
+        <Link href="/documentos">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>

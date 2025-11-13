@@ -89,7 +89,7 @@ export function DocumentsTable() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <Link href={`/dashboard/documentos/${doc.id}`}>
+                    <Link href={`/documentos/${doc.id}`}>
                       <DropdownMenuItem>
                         <Eye className="mr-2 h-4 w-4" />
                         Ver Detalle

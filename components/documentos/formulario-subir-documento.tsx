@@ -23,7 +23,7 @@ export function UploadDocumentForm() {
 
     // TODO: Implement document upload
     setTimeout(() => {
-      router.push("/dashboard/documentos")
+      router.push("/documentos")
     }, 1500)
   }
 

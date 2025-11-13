@@ -7,7 +7,7 @@ export default function UploadDocumentPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/Dashboard/documentos">
+        <Link href="/documentos">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>

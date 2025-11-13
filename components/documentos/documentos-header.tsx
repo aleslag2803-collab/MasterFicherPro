@@ -11,7 +11,7 @@ export function DocumentsHeader() {
           <h2 className="text-3xl font-bold tracking-tight text-foreground">Documentos</h2>
           <p className="text-muted-foreground">Gestiona todos los documentos del sistema</p>
         </div>
-        <Link href="/Dashboard/documentos/subir">
+        <Link href="/documentos/subir">
           <Button>
             <Upload className="mr-2 h-4 w-4" />
             Subir Documento
