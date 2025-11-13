@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
-import Sidebar from "@/components/sidebar"
+//import Sidebar from "@/components/sidebar"
 
 const geist = Geist({ subsets: ["latin"] })
 const geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -23,7 +23,7 @@ export default function RootLayout({
       <body className={`${geist.className} ${geistMono.className} font-sans antialiased`}>
         <div className="flex min-h-screen">
           {/* Menú lateral */}
-          <Sidebar />
+          {/* <Sidebar /> */}
 
           {/* Contenido principal */}
           <main className="flex-1 bg-[#f7f8fc] p-6 overflow-y-auto">
