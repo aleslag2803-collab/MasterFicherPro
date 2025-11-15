@@ -8,3 +8,19 @@
 Sistema de gestión documental que utiliza inteligencia artificial para clasificar, organizar, buscar 
 y analizar documentos de forma automática, mejorando la eficiencia en el manejo de información y 
 reduciendo el tiempo dedicado a tareas administrativas.
+
+## Arquitectura general de las APIs
+
+/api
+    ↳/cuestionario-IA
+    ↳/documentos
+    ↳/historial
+    ↳/notificaciones
+    ↳/organizacion
+    ↳/permisos
+    ↳/usuarios
+    ↳/versiones
+
+
+
+
