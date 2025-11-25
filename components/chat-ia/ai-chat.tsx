@@ -36,20 +36,45 @@ export function AIChat() {
       content: input,
     }
 
+    // Agregar mensaje del usuario
     setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsLoading(true)
 
-    // TODO: Implement AI response
-    setTimeout(() => {
+    try {
+      // 📌 Enviar mensaje al backend
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: userMessage.content }),
+      })
+
+      const data = await response.json()
+
+      // 📌 Recibir mensaje de ChatGPT
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Esta es una respuesta de ejemplo. La integración con IA se implementará próximamente.",
+        content: data.response || "No pude generar una respuesta.",
       }
+
+      // Agregar mensaje del asistente
       setMessages((prev) => [...prev, aiMessage])
-      setIsLoading(false)
-    }, 1000)
+    } catch (error) {
+      console.error("Error al obtener respuesta:", error)
+
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        role: "assistant",
+        content: "Hubo un error al conectar con el servidor.",
+      }
+
+      setMessages((prev) => [...prev, errorMessage])
+    }
+
+    setIsLoading(false)
   }
 
   return (
@@ -72,7 +97,9 @@ export function AIChat() {
                 )}
                 <div
                   className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                    message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
                   }`}
                 >
                   <p className="text-sm">{message.content}</p>
@@ -84,6 +111,7 @@ export function AIChat() {
                 )}
               </div>
             ))}
+
             {isLoading && (
               <div className="flex gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
@@ -96,6 +124,7 @@ export function AIChat() {
             )}
           </div>
         </ScrollArea>
+
         <form onSubmit={handleSubmit} className="flex gap-2">
           <Input
             value={input}
