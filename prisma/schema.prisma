@@ -8,13 +8,13 @@ datasource db {
 }
 
 model Usuarios {
-  idUsuario      String     @id @default(uuid())
-  nombre         String
-  correo         String     @unique
-  passwordHash   String
-  rol            String
-  estado         Boolean    @default(true)
-  fechaRegistro  DateTime   @default(now())
+  idUsuario     String   @id @default(uuid())
+  nombre        String
+  correo        String   @unique
+  passwordHash  String
+  rol           String
+  estado        Boolean  @default(true)
+  fechaRegistro DateTime @default(now())
 
   documentos     Documentos[]
   permisos       Permisos[]
@@ -25,77 +25,80 @@ model Usuarios {
 }
 
 model Documentos {
-  idDocumento          String     @id @default(uuid())
+  idDocumento          String @id @default(uuid())
   idUsuarioPropietario String
   nombreArchivo        String
   tipoArchivo          String
-  rutaArchivo          String
-  fechaSubida          DateTime   @default(now())
-  version              String?
-  estado               String
-  etiquetas            String?
-  resumen              String?
 
-  usuarioPropietario   Usuarios   @relation(fields: [idUsuarioPropietario], references: [idUsuario])
-  permisos             Permisos[]
-  historial            HistorialAcciones[]
-  versiones            VersionesDocumento[]
+  contenidoArchivo Bytes? // 👈 opcional
+  tamanoBytes      Int? // 👈 opcional
+
+  fechaSubida DateTime @default(now())
+  version     String?
+  estado      String
+  etiquetas   String?
+  resumen     String?
+
+  usuarioPropietario Usuarios             @relation(fields: [idUsuarioPropietario], references: [idUsuario])
+  permisos           Permisos[]
+  historial          HistorialAcciones[]
+  versiones          VersionesDocumento[]
 }
 
 model Permisos {
-  idPermiso       String    @id @default(uuid())
+  idPermiso       String   @id @default(uuid())
   idUsuario       String
   idDocumento     String
   tipoAcceso      String
-  fechaAsignacion DateTime  @default(now())
+  fechaAsignacion DateTime @default(now())
 
-  usuario         Usuarios   @relation(fields: [idUsuario], references: [idUsuario])
-  documento       Documentos @relation(fields: [idDocumento], references: [idDocumento])
+  usuario   Usuarios   @relation(fields: [idUsuario], references: [idUsuario])
+  documento Documentos @relation(fields: [idDocumento], references: [idDocumento])
 }
 
 model Organizacion {
-  idOrganizacion  String       @id @default(uuid())
+  idOrganizacion  String   @id @default(uuid())
   idUsuario       String
   nombreCarpeta   String
   nivelJerarquico Int
   padreId         String?
-  fechaCreacion   DateTime     @default(now())
+  fechaCreacion   DateTime @default(now())
 
-  usuario         Usuarios       @relation(fields: [idUsuario], references: [idUsuario])
-  padre           Organizacion?  @relation("Jerarquia", fields: [padreId], references: [idOrganizacion])
-  hijos           Organizacion[] @relation("Jerarquia")
+  usuario Usuarios       @relation(fields: [idUsuario], references: [idUsuario])
+  padre   Organizacion?  @relation("Jerarquia", fields: [padreId], references: [idOrganizacion])
+  hijos   Organizacion[] @relation("Jerarquia")
 }
 
 model CuestionarioIA {
-  idCuestionario  String   @id @default(uuid())
-  idUsuario       String
-  pregunta        String
-  respuesta       String
-  fechaRespuesta  DateTime @default(now())
+  idCuestionario String   @id @default(uuid())
+  idUsuario      String
+  pregunta       String
+  respuesta      String
+  fechaRespuesta DateTime @default(now())
 
-  usuario         Usuarios @relation(fields: [idUsuario], references: [idUsuario])
+  usuario Usuarios @relation(fields: [idUsuario], references: [idUsuario])
 }
 
 model HistorialAcciones {
-  idHistorial    String   @id @default(uuid())
-  idUsuario      String
-  idDocumento    String
-  accion         String
-  fechaAccion    DateTime @default(now())
-  detalle        String?
+  idHistorial String   @id @default(uuid())
+  idUsuario   String
+  idDocumento String
+  accion      String
+  fechaAccion DateTime @default(now())
+  detalle     String?
 
-  usuario        Usuarios   @relation(fields: [idUsuario], references: [idUsuario])
-  documento      Documentos @relation(fields: [idDocumento], references: [idDocumento])
+  usuario   Usuarios   @relation(fields: [idUsuario], references: [idUsuario])
+  documento Documentos @relation(fields: [idDocumento], references: [idDocumento])
 }
 
 model VersionesDocumento {
-  idVersion      String   @id @default(uuid())
-  idDocumento    String
-  numeroVersion  String
-  rutaArchivo    String
-  fechaVersion   DateTime @default(now())
+  idVersion     String   @id @default(uuid())
+  idDocumento   String
+  numeroVersion String
+  rutaArchivo   String
+  fechaVersion  DateTime @default(now())
 
-  documento      Documentos @relation(fields: [idDocumento], references: [idDocumento])
+  documento Documentos @relation(fields: [idDocumento], references: [idDocumento])
 }
 
 model Notificaciones {
@@ -105,5 +108,5 @@ model Notificaciones {
   leido          Boolean  @default(false)
   fechaEnvio     DateTime @default(now())
 
-  usuario        Usuarios @relation(fields: [idUsuario], references: [idUsuario])
+  usuario Usuarios @relation(fields: [idUsuario], references: [idUsuario])
 }

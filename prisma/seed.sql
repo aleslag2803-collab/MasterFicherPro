@@ -8,13 +8,14 @@ VALUES
 ('d7a6a3a9-30aa-47d1-a431-bf6f1280d942', 'Lucía Gómez', 'lucia@example.com', 'hashedpass789', 'lector');
 
 -- ===========================
--- DOCUMENTOS
+-- DOCUMENTOS  (NUEVA ESTRUCTURA)
 -- ===========================
-INSERT INTO Documentos (idDocumento, idUsuarioPropietario, nombreArchivo, tipoArchivo, rutaArchivo, version, estado, etiquetas, resumen)
+-- NOTA: ya no existe rutaArchivo; contenidoArchivo y tamanoBytes quedan NULL (sin archivo físico)
+INSERT INTO Documentos (idDocumento, idUsuarioPropietario, nombreArchivo, tipoArchivo, version, estado, etiquetas, resumen)
 VALUES
-('d2d1b3c4-3f2e-4c25-a8b9-9a0b8e73c111', 'b1b7e1c6-9a65-44e3-8e11-bc8a7a8d86c1', 'Proyecto_MasterFicher.pdf', 'application/pdf', '/docs/Proyecto_MasterFicher.pdf', 'v1.0', 'activo', 'proyecto, masterficher, inicio', 'Documento inicial del proyecto MasterFicher'),
-('e5f4a2b9-9c22-4e11-8a97-ec91e8a8d17a', '9c9d18c5-3b22-46c2-bd4f-b44f2609135b', 'ReporteVentas.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '/docs/ReporteVentas.xlsx', 'v2.1', 'activo', 'reportes, finanzas', 'Reporte de ventas actualizado al Q3'),
-('a3e8c3f5-49b2-40cd-84f7-9e1a456d122e', 'd7a6a3a9-30aa-47d1-a431-bf6f1280d942', 'Guía_Usuario.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '/docs/Guia_Usuario.docx', 'v1.2', 'borrador', 'documentación, guía', 'Manual de uso básico para nuevos usuarios');
+('d2d1b3c4-3f2e-4c25-a8b9-9a0b8e73c111', 'b1b7e1c6-9a65-44e3-8e11-bc8a7a8d86c1', 'Proyecto_MasterFicher.pdf', 'application/pdf', 'v1.0', 'activo', 'proyecto, masterficher, inicio', 'Documento inicial del proyecto MasterFicher'),
+('e5f4a2b9-9c22-4e11-8a97-ec91e8a8d17a', '9c9d18c5-3b22-46c2-bd4f-b44f2609135b', 'ReporteVentas.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'v2.1', 'activo', 'reportes, finanzas', 'Reporte de ventas actualizado al Q3'),
+('a3e8c3f5-49b2-40cd-84f7-9e1a456d122e', 'd7a6a3a9-30aa-47d1-a431-bf6f1280d942', 'Guía_Usuario.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'v1.2', 'borrador', 'documentación, guía', 'Manual de uso básico para nuevos usuarios');
 
 -- ===========================
 -- PERMISOS

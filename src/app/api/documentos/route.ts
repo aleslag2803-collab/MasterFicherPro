@@ -1,49 +1,66 @@
-import { NextResponse } from "next/server"
-import { prisma } from "@/src/lib/prisma"
+// app/api/documentos/route.ts
+import { NextRequest, NextResponse } from "next/server"
+import {
+  getDocumentosController,
+  postDocumentoController,
+} from "@/src/server/documentos/documentos.controller"
 
+export const runtime = "nodejs" // importante para poder usar Buffer
+
+// GET /api/documentos -> lista documentos
 export async function GET() {
-  const documentos = await prisma.documentos.findMany({
-    include: { usuarioPropietario: true },
-  })
-  return NextResponse.json(documentos)
+  const result = await getDocumentosController()
+  return NextResponse.json(result.body, { status: result.status })
 }
 
-export async function POST(request: Request) {
-  const body = await request.json()
-  const nuevo = await prisma.documentos.create({
-    data: {
-      idUsuarioPropietario: body.idUsuarioPropietario,
-      nombreArchivo: body.nombreArchivo,
-      tipoArchivo: body.tipoArchivo,
-      rutaArchivo: body.rutaArchivo,
-      version: body.version,
-      estado: body.estado,
-      etiquetas: body.etiquetas,
-      resumen: body.resumen,
-    },
-  })
-  return NextResponse.json(nuevo)
-}
+// POST /api/documentos -> subir documento (PDF u otro)
+export async function POST(req: NextRequest) {
+  try {
+    const formData = await req.formData()
 
-export async function PUT(request: Request) {
-  const body = await request.json()
-  const actualizado = await prisma.documentos.update({
-    where: { idDocumento: body.idDocumento },
-    data: {
-      nombreArchivo: body.nombreArchivo,
-      tipoArchivo: body.tipoArchivo,
-      rutaArchivo: body.rutaArchivo,
-      version: body.version,
-      estado: body.estado,
-      etiquetas: body.etiquetas,
-      resumen: body.resumen,
-    },
-  })
-  return NextResponse.json(actualizado)
-}
+    const file = formData.get("file") as File | null
+    const idUsuarioPropietario = formData.get("idUsuarioPropietario") as
+      | string
+      | null
 
-export async function DELETE(request: Request) {
-  const body = await request.json()
-  await prisma.documentos.delete({ where: { idDocumento: body.idDocumento } })
-  return NextResponse.json({ message: "Documento eliminado" })
+    if (!file) {
+      return NextResponse.json(
+        { error: "No se recibió ningún archivo" },
+        { status: 400 }
+      )
+    }
+
+    if (!idUsuarioPropietario) {
+      return NextResponse.json(
+        { error: "idUsuarioPropietario es obligatorio" },
+        { status: 400 }
+      )
+    }
+
+    const arrayBuffer = (await file.arrayBuffer()) as ArrayBuffer
+    const uint8 = new Uint8Array(arrayBuffer)
+    
+    const bodyForService = {
+      idUsuarioPropietario,
+      nombreArchivo: file.name,
+      tipoArchivo: file.type || "application/pdf",
+      contenidoArchivo: uint8,        // 👈 ahora es Uint8Array
+      tamanoBytes: uint8.byteLength,
+      // opcionales desde el formData
+      estado: (formData.get("estado") as string) || "ACTIVO",
+      version: (formData.get("version") as string) || undefined,
+      etiquetas: (formData.get("etiquetas") as string) || undefined,
+      resumen: (formData.get("resumen") as string) || undefined,
+    }
+
+    const result = await postDocumentoController(bodyForService)
+
+    return NextResponse.json(result.body, { status: result.status })
+  } catch (error: any) {
+    console.error("Error en POST /api/documentos", error)
+    return NextResponse.json(
+      { error: error?.message ?? "Error al subir documento" },
+      { status: 500 }
+    )
+  }
 }
