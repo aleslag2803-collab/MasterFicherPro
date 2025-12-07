@@ -54,6 +54,8 @@ export function UploadDocumentForm() {
         body: formData,
       })
 
+      
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(data?.error ?? "Error al subir el documento")

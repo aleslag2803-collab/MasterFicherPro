@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getDocumentoPorIdController } from "@/src/server/documentos/documentos.controller"
+import { deleteDocumentoController, getDocumentoPorIdController } from "@/src/server/documentos/documentos.controller"
 
 export const runtime = "nodejs"
 
@@ -38,4 +38,19 @@ export async function GET(
       "Content-Disposition": `inline; filename="${documento.nombreArchivo}"`,
     },
   })
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const idDocumento = params.id
+
+  const result = await deleteDocumentoController(idDocumento)
+
+  if (result.status !== 200) {
+    return NextResponse.json(result.body, { status: result.status })
+  }
+
+  return NextResponse.json(result.body, { status: 200 })
 }

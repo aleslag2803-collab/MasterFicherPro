@@ -4,6 +4,7 @@ import {
   findDocumentoById,
 } from "./documentos.repository"
 import { Documento, DocumentoCreateInput } from "./documentos.model"
+import { deleteDocumentoById } from "./documentos.repository"
 
 export async function listarDocumentosService(): Promise<Documento[]> {
   const documentos = await findAllDocumentos()
@@ -50,3 +51,14 @@ export async function crearDocumentoService(body: any): Promise<Documento> {
   const documento = await createDocumento(data)
   return documento
 }
+
+export async function eliminarDocumentoService(idDocumento: string): Promise<boolean> {
+  if (!idDocumento) {
+    throw new Error("idDocumento es obligatorio")
+  }
+
+  // Llamar al repositorio para eliminar el documento
+  const result = await deleteDocumentoById(idDocumento)
+  return result
+}
+

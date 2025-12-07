@@ -53,6 +53,8 @@ export function DocumentViewer({ documentId }: DocumentViewerProps) {
   return (
     <Card>
       <CardHeader>
+        <p className="text-muted-foreground">{doc?.nombreArchivo}</p>
+        <br />
         <CardTitle>Vista Previa del Documento</CardTitle>
       </CardHeader>
       <CardContent>

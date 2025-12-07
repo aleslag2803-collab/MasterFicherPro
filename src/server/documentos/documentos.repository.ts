@@ -44,3 +44,18 @@ export async function createDocumento(
   return nuevoDocumento as unknown as Documento
 }
 
+// Eliminar un documento por su id
+export async function deleteDocumentoById(idDocumento: string): Promise<boolean> {
+  try {
+    const documento = await prisma.documentos.delete({
+      where: {
+        idDocumento,
+      },
+    })
+
+    return !!documento  // Retorna true si el documento fue eliminado
+  } catch (error) {
+    console.error("Error eliminando el documento", error)
+    return false  // Retorna false si algo falla
+  }
+}

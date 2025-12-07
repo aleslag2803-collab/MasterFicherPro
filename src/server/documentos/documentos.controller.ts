@@ -3,6 +3,7 @@ import {
   crearDocumentoService,
   obtenerDocumentoPorIdService,
 } from "./documentos.service"
+import { eliminarDocumentoService } from "./documentos.service"
 
 export async function getDocumentosController() {
   const documentos = await listarDocumentosService()
@@ -56,6 +57,31 @@ export async function postDocumentoController(body: any) {
       status: 400,
       body: {
         error: error?.message ?? "Error al crear documento",
+      },
+    }
+  } 
+}
+
+export async function deleteDocumentoController(idDocumento: string) {
+  try {
+    const result = await eliminarDocumentoService(idDocumento)
+
+    if (!result) {
+      return {
+        status: 404,
+        body: { error: "Documento no encontrado o no pudo ser eliminado" },
+      }
+    }
+
+    return {
+      status: 200,
+      body: { message: "Documento eliminado exitosamente" },
+    }
+  } catch (error: any) {
+    return {
+      status: 500,
+      body: {
+        error: error?.message ?? "Error al eliminar el documento",
       },
     }
   }

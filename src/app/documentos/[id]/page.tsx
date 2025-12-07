@@ -24,7 +24,6 @@ export default async function DocumentDetailPage({
           <h2 className="text-3xl font-bold tracking-tight text-foreground">
             Detalle del Documento
           </h2>
-          <p className="text-muted-foreground">ID: {id}</p>
         </div>
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
