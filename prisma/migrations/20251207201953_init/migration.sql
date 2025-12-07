@@ -1,17 +1,6 @@
-/*
-  Warnings:
-
-  - You are about to drop the `User` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropTable
-PRAGMA foreign_keys=off;
-DROP TABLE "User";
-PRAGMA foreign_keys=on;
-
 -- CreateTable
 CREATE TABLE "Usuarios" (
-    "idUsuario" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "idUsuario" TEXT NOT NULL PRIMARY KEY,
     "nombre" TEXT NOT NULL,
     "correo" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
@@ -22,24 +11,26 @@ CREATE TABLE "Usuarios" (
 
 -- CreateTable
 CREATE TABLE "Documentos" (
-    "idDocumento" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "idUsuarioPropietario" INTEGER NOT NULL,
+    "idDocumento" TEXT NOT NULL PRIMARY KEY,
+    "idUsuarioPropietario" TEXT NOT NULL,
     "nombreArchivo" TEXT NOT NULL,
     "tipoArchivo" TEXT NOT NULL,
-    "rutaArchivo" TEXT NOT NULL,
+    "contenidoArchivo" BLOB,
+    "tamanoBytes" INTEGER,
     "fechaSubida" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "version" TEXT,
     "estado" TEXT NOT NULL,
     "etiquetas" TEXT,
     "resumen" TEXT,
+    "esAuditoria" BOOLEAN NOT NULL DEFAULT false,
     CONSTRAINT "Documentos_idUsuarioPropietario_fkey" FOREIGN KEY ("idUsuarioPropietario") REFERENCES "Usuarios" ("idUsuario") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "Permisos" (
-    "idPermiso" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "idUsuario" INTEGER NOT NULL,
-    "idDocumento" INTEGER NOT NULL,
+    "idPermiso" TEXT NOT NULL PRIMARY KEY,
+    "idUsuario" TEXT NOT NULL,
+    "idDocumento" TEXT NOT NULL,
     "tipoAcceso" TEXT NOT NULL,
     "fechaAsignacion" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Permisos_idUsuario_fkey" FOREIGN KEY ("idUsuario") REFERENCES "Usuarios" ("idUsuario") ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -48,11 +39,11 @@ CREATE TABLE "Permisos" (
 
 -- CreateTable
 CREATE TABLE "Organizacion" (
-    "idOrganizacion" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "idUsuario" INTEGER NOT NULL,
+    "idOrganizacion" TEXT NOT NULL PRIMARY KEY,
+    "idUsuario" TEXT NOT NULL,
     "nombreCarpeta" TEXT NOT NULL,
     "nivelJerarquico" INTEGER NOT NULL,
-    "padreId" INTEGER,
+    "padreId" TEXT,
     "fechaCreacion" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Organizacion_idUsuario_fkey" FOREIGN KEY ("idUsuario") REFERENCES "Usuarios" ("idUsuario") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Organizacion_padreId_fkey" FOREIGN KEY ("padreId") REFERENCES "Organizacion" ("idOrganizacion") ON DELETE SET NULL ON UPDATE CASCADE
@@ -60,8 +51,8 @@ CREATE TABLE "Organizacion" (
 
 -- CreateTable
 CREATE TABLE "CuestionarioIA" (
-    "idCuestionario" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "idUsuario" INTEGER NOT NULL,
+    "idCuestionario" TEXT NOT NULL PRIMARY KEY,
+    "idUsuario" TEXT NOT NULL,
     "pregunta" TEXT NOT NULL,
     "respuesta" TEXT NOT NULL,
     "fechaRespuesta" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -70,9 +61,9 @@ CREATE TABLE "CuestionarioIA" (
 
 -- CreateTable
 CREATE TABLE "HistorialAcciones" (
-    "idHistorial" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "idUsuario" INTEGER NOT NULL,
-    "idDocumento" INTEGER NOT NULL,
+    "idHistorial" TEXT NOT NULL PRIMARY KEY,
+    "idUsuario" TEXT NOT NULL,
+    "idDocumento" TEXT NOT NULL,
     "accion" TEXT NOT NULL,
     "fechaAccion" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "detalle" TEXT,
@@ -82,8 +73,8 @@ CREATE TABLE "HistorialAcciones" (
 
 -- CreateTable
 CREATE TABLE "VersionesDocumento" (
-    "idVersion" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "idDocumento" INTEGER NOT NULL,
+    "idVersion" TEXT NOT NULL PRIMARY KEY,
+    "idDocumento" TEXT NOT NULL,
     "numeroVersion" TEXT NOT NULL,
     "rutaArchivo" TEXT NOT NULL,
     "fechaVersion" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -92,8 +83,8 @@ CREATE TABLE "VersionesDocumento" (
 
 -- CreateTable
 CREATE TABLE "Notificaciones" (
-    "idNotificacion" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "idUsuario" INTEGER NOT NULL,
+    "idNotificacion" TEXT NOT NULL PRIMARY KEY,
+    "idUsuario" TEXT NOT NULL,
     "mensaje" TEXT NOT NULL,
     "leido" BOOLEAN NOT NULL DEFAULT false,
     "fechaEnvio" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

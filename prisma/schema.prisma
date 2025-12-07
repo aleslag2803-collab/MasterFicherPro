@@ -30,8 +30,8 @@ model Documentos {
   nombreArchivo        String
   tipoArchivo          String
 
-  contenidoArchivo Bytes? // 👈 opcional
-  tamanoBytes      Int? // 👈 opcional
+  contenidoArchivo Bytes?
+  tamanoBytes      Int?
 
   fechaSubida DateTime @default(now())
   version     String?
@@ -39,11 +39,15 @@ model Documentos {
   etiquetas   String?
   resumen     String?
 
+  // 👇 Nuevo campo
+  esAuditoria Boolean @default(false)
+
   usuarioPropietario Usuarios             @relation(fields: [idUsuarioPropietario], references: [idUsuario])
   permisos           Permisos[]
   historial          HistorialAcciones[]
   versiones          VersionesDocumento[]
 }
+
 
 model Permisos {
   idPermiso       String   @id @default(uuid())
