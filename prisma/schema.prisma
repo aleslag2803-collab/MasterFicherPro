@@ -22,6 +22,11 @@ model Usuarios {
   cuestionarios  CuestionarioIA[]
   historial      HistorialAcciones[]
   notificaciones Notificaciones[]
+
+  // Auditoría
+  procesosAuditoriaAsignados ProcesosAuditoria[] @relation("ProcesosAuditoriaAuditor")
+  comentariosAuditoria       ComentariosAuditoria[]
+  decisionesAuditoria        DecisionesAuditoria[]
 }
 
 model Documentos {
@@ -39,7 +44,6 @@ model Documentos {
   etiquetas   String?
   resumen     String?
 
-  // 👇 Nuevo campo
   esAuditoria Boolean @default(false)
   esEliminado Boolean @default(false)
 
@@ -47,8 +51,10 @@ model Documentos {
   permisos           Permisos[]
   historial          HistorialAcciones[]
   versiones          VersionesDocumento[]
-}
 
+  // Procesos de auditoría asociados a este documento
+  procesosAuditoria ProcesosAuditoria[]
+}
 
 model Permisos {
   idPermiso       String   @id @default(uuid())
@@ -82,6 +88,61 @@ model CuestionarioIA {
   fechaRespuesta DateTime @default(now())
 
   usuario Usuarios @relation(fields: [idUsuario], references: [idUsuario])
+}
+
+model ProcesosAuditoria {
+  idProcesoAuditoria String   @id @default(uuid())
+  idDocumento        String
+  idAuditor          String?
+  nombre             String?
+  // estado del proceso: en_proceso / finalizado / cancelado (podrás extenderlo)
+  estado             String   @default("en_proceso")
+  fechaLimite        DateTime?
+  fechaCreacion      DateTime @default(now())
+  fechaActualizacion DateTime @default(now())
+
+  documento Documentos @relation(fields: [idDocumento], references: [idDocumento])
+  auditor   Usuarios?  @relation("ProcesosAuditoriaAuditor", fields: [idAuditor], references: [idUsuario])
+
+  comentarios ComentariosAuditoria[]
+  criterios   CriteriosAuditoria[]
+  decisiones  DecisionesAuditoria[]
+}
+
+model ComentariosAuditoria {
+  idComentarioAuditoria String   @id @default(uuid())
+  idProcesoAuditoria    String
+  idUsuario             String
+  comentario            String?
+  urlAdjunto            String?
+  fechaComentario       DateTime @default(now())
+
+  proceso ProcesosAuditoria @relation(fields: [idProcesoAuditoria], references: [idProcesoAuditoria])
+  usuario Usuarios          @relation(fields: [idUsuario], references: [idUsuario])
+}
+
+model CriteriosAuditoria {
+  idCriterioAuditoria String   @id @default(uuid())
+  idProcesoAuditoria  String
+  titulo              String
+  // cumple / no_cumple / pendiente
+  estado              String   @default("pendiente")
+  notas               String?
+
+  proceso ProcesosAuditoria @relation(fields: [idProcesoAuditoria], references: [idProcesoAuditoria])
+}
+
+model DecisionesAuditoria {
+  idDecisionAuditoria String   @id @default(uuid())
+  idProcesoAuditoria  String
+  idUsuario           String
+  // aprobado / rechazado
+  decision            String
+  motivo              String?
+  fechaDecision       DateTime @default(now())
+
+  proceso ProcesosAuditoria @relation(fields: [idProcesoAuditoria], references: [idProcesoAuditoria])
+  usuario Usuarios          @relation(fields: [idUsuario], references: [idUsuario])
 }
 
 model HistorialAcciones {
