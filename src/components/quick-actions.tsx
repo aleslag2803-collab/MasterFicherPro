@@ -40,7 +40,7 @@ export function QuickActions() {
           {actions.map((action, index) => {
             const Icon = action.icon
 
-            // 👉 Caso especial: Subir Documento
+            // 👉 Subir Documento → /documentos/subir
             if (action.title === "Subir Documento") {
               return (
                 <Button
@@ -49,7 +49,6 @@ export function QuickActions() {
                   variant="default"
                   className={`h-auto py-6 flex flex-col items-center gap-2 ${action.color}`}
                 >
-                  {/* Navega a la página completa de subida */}
                   <Link href="/documentos/subir">
                     <Icon className="w-6 h-6" />
                     <span className="text-sm font-medium">{action.title}</span>
@@ -58,7 +57,58 @@ export function QuickActions() {
               )
             }
 
-            // 👉 El resto de botones quedan normales (por ahora sin lógica)
+            // 👉 Nueva Organización → /organizaciones/nueva
+            if (action.title === "Nueva Organización") {
+              return (
+                <Button
+                  key={index}
+                  asChild
+                  variant="default"
+                  className={`h-auto py-6 flex flex-col items-center gap-2 ${action.color}`}
+                >
+                  <Link href="/organizaciones/nueva">
+                    <Icon className="w-6 h-6" />
+                    <span className="text-sm font-medium">{action.title}</span>
+                  </Link>
+                </Button>
+              )
+            }
+
+            // 👉 Asistente IA → /chat-ia
+            if (action.title === "Asistente IA") {
+              return (
+                <Button
+                  key={index}
+                  asChild
+                  variant="default"
+                  className={`h-auto py-6 flex flex-col items-center gap-2 ${action.color}`}
+                >
+                  <Link href="/chat-ia">
+                    <Icon className="w-6 h-6" />
+                    <span className="text-sm font-medium">{action.title}</span>
+                  </Link>
+                </Button>
+              )
+            }
+
+            // 👉 Gestionar Usuarios → /usuarios
+            if (action.title === "Gestionar Usuarios") {
+              return (
+                <Button
+                  key={index}
+                  asChild
+                  variant="default"
+                  className={`h-auto py-6 flex flex-col items-center gap-2 ${action.color}`}
+                >
+                  <Link href="/usuarios">
+                    <Icon className="w-6 h-6" />
+                    <span className="text-sm font-medium">{action.title}</span>
+                  </Link>
+                </Button>
+              )
+            }
+
+            // Fallback (no debería entrar aquí, pero por si se agrega algo nuevo)
             return (
               <Button
                 key={index}
