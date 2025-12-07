@@ -10,9 +10,13 @@ import { Input } from "../ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { Textarea } from "../ui/textarea"
 import { Button } from "../ui/button"
+import { Switch } from "../ui/switch"
+import { useToast } from "../ui/use-toast" // 👈 toast
 
 export function UploadDocumentForm() {
   const router = useRouter()
+  const { toast } = useToast() // 👈 hook de toast
+
   const [isLoading, setIsLoading] = useState(false)
   const [fileName, setFileName] = useState("")
   const [file, setFile] = useState<File | null>(null)
@@ -23,6 +27,12 @@ export function UploadDocumentForm() {
   const [descripcion, setDescripcion] = useState("")
   const [error, setError] = useState<string | null>(null)
 
+  // Estados para auditoría
+  const [esAuditoria, setEsAuditoria] = useState(false)
+  const [auditoriaNombreProceso, setAuditoriaNombreProceso] = useState("")
+  const [auditoriaUsuarioCreador, setAuditoriaUsuarioCreador] = useState("")
+  const [auditoriaFechaLimite, setAuditoriaFechaLimite] = useState("")
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
@@ -32,10 +42,28 @@ export function UploadDocumentForm() {
       return
     }
 
+    // Validar que sea PDF (por si acaso, además del onChange)
+    const isPdf =
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf")
+
+    if (!isPdf) {
+      setError("El archivo debe ser un PDF")
+      return
+    }
+
+    // Validación básica de auditoría
+    if (
+      esAuditoria &&
+      (!auditoriaNombreProceso || !auditoriaUsuarioCreador || !auditoriaFechaLimite)
+    ) {
+      setError("Completa todos los campos de la sección de auditoría")
+      return
+    }
+
     setIsLoading(true)
 
     try {
-
       const idUsuarioPropietario = "10ed8a97-ee90-4339-81c6-1e079273a0e1"
 
       const formData = new FormData()
@@ -49,17 +77,29 @@ export function UploadDocumentForm() {
       )
       formData.append("resumen", descripcion || nombreDocumento)
 
+      // Campos nuevos
+      formData.append("esAuditoria", String(esAuditoria))
+      if (esAuditoria) {
+        formData.append("auditoriaNombreProceso", auditoriaNombreProceso)
+        formData.append("auditoriaUsuarioCreador", auditoriaUsuarioCreador)
+        formData.append("auditoriaFechaLimite", auditoriaFechaLimite)
+      }
+
       const res = await fetch("/api/documentos", {
         method: "POST",
         body: formData,
       })
 
-      
-
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(data?.error ?? "Error al subir el documento")
       }
+
+      // ✅ Toast de éxito
+      toast({
+        title: "Documento subido",
+        description: "El documento se ha subido correctamente.",
+      })
 
       router.push("/documentos")
     } catch (err: any) {
@@ -89,6 +129,23 @@ export function UploadDocumentForm() {
                 accept="application/pdf"
                 onChange={(e) => {
                   const f = e.target.files?.[0] || null
+
+                  if (f) {
+                    const isPdf =
+                      f.type === "application/pdf" ||
+                      f.name.toLowerCase().endsWith(".pdf")
+
+                    if (!isPdf) {
+                      setError("El archivo debe ser un PDF")
+                      setFile(null)
+                      setFileName("")
+                      // Limpia el input
+                      e.target.value = ""
+                      return
+                    }
+                  }
+
+                  setError(null)
                   setFile(f)
                   setFileName(f?.name || "")
                 }}
@@ -158,6 +215,63 @@ export function UploadDocumentForm() {
               </Select>
             </div>
           </div>
+
+          {/* Switch de auditoría */}
+          <div className="flex items-center justify-between rounded-md border px-3 py-2">
+            <div className="space-y-1">
+              <Label htmlFor="esAuditoria">¿Es un documento para auditoría?</Label>
+              <p className="text-xs text-muted-foreground">
+                Activa esta opción si el documento forma parte de un proceso de auditoría.
+              </p>
+            </div>
+            <Switch
+              id="esAuditoria"
+              checked={esAuditoria}
+              onCheckedChange={setEsAuditoria}
+            />
+          </div>
+
+          {/* Sección Auditoría condicional */}
+          {esAuditoria && (
+            <div className="space-y-4 rounded-md border bg-muted/40 p-4">
+              <h3 className="text-sm font-medium">Auditoría</h3>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="auditoriaNombreProceso">Nombre del proceso</Label>
+                  <Input
+                    id="auditoriaNombreProceso"
+                    placeholder="Ej: Auditoría interna 2025"
+                    value={auditoriaNombreProceso}
+                    onChange={(e) => setAuditoriaNombreProceso(e.target.value)}
+                    required={esAuditoria}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="auditoriaUsuarioCreador">Usuario que crea el proceso</Label>
+                  <Input
+                    id="auditoriaUsuarioCreador"
+                    placeholder="Ej: Juan Pérez"
+                    value={auditoriaUsuarioCreador}
+                    onChange={(e) => setAuditoriaUsuarioCreador(e.target.value)}
+                    required={esAuditoria}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 md:w-1/3">
+                <Label htmlFor="auditoriaFechaLimite">Fecha límite del proceso</Label>
+                <Input
+                  id="auditoriaFechaLimite"
+                  type="date"
+                  value={auditoriaFechaLimite}
+                  onChange={(e) => setAuditoriaFechaLimite(e.target.value)}
+                  required={esAuditoria}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="description">Descripción</Label>

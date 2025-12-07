@@ -12,6 +12,8 @@ export interface Documento {
   estado: string
   etiquetas?: string | null
   resumen?: string | null
+  esAuditoria: boolean
+  esEliminado: boolean
 }
 
 export interface DocumentoCreateInput {

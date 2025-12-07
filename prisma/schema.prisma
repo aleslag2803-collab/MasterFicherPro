@@ -41,6 +41,7 @@ model Documentos {
 
   // 👇 Nuevo campo
   esAuditoria Boolean @default(false)
+  esEliminado Boolean @default(false)
 
   usuarioPropietario Usuarios             @relation(fields: [idUsuarioPropietario], references: [idUsuario])
   permisos           Permisos[]

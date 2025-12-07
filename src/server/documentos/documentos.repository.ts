@@ -38,6 +38,8 @@ export async function createDocumento(
       estado: data.estado,
       etiquetas: data.etiquetas ?? null,
       resumen: data.resumen ?? null,
+      esAuditoria: false,
+      esEliminado: false,
     },
   })
 
