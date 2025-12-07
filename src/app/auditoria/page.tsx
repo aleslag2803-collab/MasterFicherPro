@@ -1,79 +1,83 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import AuditFilters from "@/src/components/auditoria/audit-filters"
-import AuditHeader from "@/src/components/auditoria/audit-header"
-import AuditTable from "@/src/components/auditoria/audit-table"
-import { useState } from "react"
-
-
-// Datos de ejemplo para auditoría
-const MOCK_AUDIT_LOGS = [
-  {
-    id: 1,
-    user: "Alessa Colorado",
-    action: "Crear",
-    resource: "Contrato de servicios",
-    type: "Documento",
-    timestamp: "2025-01-15 14:40",
-    details: "Documento creado",
-  },
-  {
-    id: 2,
-    user: "Francisco Kantún",
-    action: "Actualizar",
-    resource: "Informe Financiero Q1",
-    type: "Documento",
-    timestamp: "2025-01-14 11:20",
-    details: "Documento actualizado",
-  },
-  {
-    id: 3,
-    user: "Jose Quintal",
-    action: "Ver",
-    resource: "Documento Temporal",
-    type: "Documento",
-    timestamp: "2025-01-13 16:15",
-    details: "Documento Eliminado",
-  },
-  {
-    id: 4,
-    user: "Diego Bacelis",
-    action: "Eliminar",
-    resource: "Tech Dept",
-    type: "Organización",
-    timestamp: "2025-01-12 11:10",
-    details: "Documento Visualizado",
-  },
-]
+import AuditTable, { AuditLog } from "@/src/components/auditoria/audit-table"
 
 export default function AuditoriaPage() {
+  const [logs, setLogs] = useState<AuditLog[]>([])
+  const [filteredLogs, setFilteredLogs] = useState<AuditLog[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [filteredLogs, setFilteredLogs] = useState(MOCK_AUDIT_LOGS)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const loadLogs = async () => {
+      try {
+        const res = await fetch("/api/historial")
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          throw new Error(data?.error ?? "Error al cargar el historial de acciones")
+        }
+
+        const data = (await res.json()) as AuditLog[]
+        setLogs(data)
+        setFilteredLogs(data)
+      } catch (err: any) {
+        console.error("Error al cargar el historial de acciones", err)
+        setError(err?.message ?? "No se pudo cargar el historial de acciones")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadLogs()
+  }, [])
 
   const handleSearch = (term: string) => {
     setSearchTerm(term)
-    const filtered = MOCK_AUDIT_LOGS.filter(
-      (log) =>
-        log.user.toLowerCase().includes(term.toLowerCase()) ||
-        log.action.toLowerCase().includes(term.toLowerCase()) ||
-        log.resource.toLowerCase().includes(term.toLowerCase()),
+    const lower = term.toLowerCase()
+
+    const filtered = logs.filter((log) =>
+      [log.user, log.action, log.resource, log.type, log.details]
+        .filter(Boolean)
+        .some((field) => field.toLowerCase().includes(lower))
     )
+
     setFilteredLogs(filtered)
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <AuditHeader />
-      <div className="p-6 lg:p-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Auditoría</h1>
-          <p className="text-muted-foreground">Registro de todas las acciones realizadas en el sistema</p>
-        </div>
-
-        <AuditFilters searchTerm={searchTerm} onSearch={handleSearch} logCount={filteredLogs.length} />
-
-        <AuditTable logs={filteredLogs} />
+    <div className="space-y-6">
+      {/* Encabezado igual que Documentos */}
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">Auditoría</h2>
+        <p className="text-muted-foreground">
+          Registro de todas las acciones realizadas en el sistema
+        </p>
       </div>
+
+      {/* Filtros / buscador */}
+      <AuditFilters
+        searchTerm={searchTerm}
+        onSearch={handleSearch}
+        logCount={filteredLogs.length}
+      />
+
+      {/* Estados */}
+      {isLoading && (
+        <p className="text-sm text-muted-foreground">Cargando registros de auditoría...</p>
+      )}
+
+      {error && !isLoading && (
+        <p className="text-sm text-red-500">
+          Error al cargar los registros de auditoría: {error}
+        </p>
+      )}
+
+      {/* Tabla con datos reales */}
+      {!isLoading && !error && <AuditTable logs={filteredLogs} />}
     </div>
   )
 }

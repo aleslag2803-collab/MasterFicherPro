@@ -2,8 +2,28 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/src/lib/prisma"
 
 export async function GET() {
-  const historial = await prisma.historialAcciones.findMany()
-  return NextResponse.json(historial)
+  // Incluimos usuario y documento relacionados
+  const historial = await prisma.historialAcciones.findMany({
+    orderBy: { fechaAccion: "desc" },
+    include: {
+      usuario: true,
+      documento: true,
+    },
+  })
+
+  // Normalizamos a la estructura que usa el frontend de Auditoría
+  const result = historial.map((item) => ({
+    id: item.idHistorial,
+    user: item.usuario?.nombre ?? "Usuario desconocido",
+    action: item.accion,
+    resource: item.documento?.nombreArchivo ?? item.idDocumento,
+    // Si después auditas otros recursos, aquí lo ajustas
+    type: "Documento",
+    timestamp: item.fechaAccion.toISOString(),
+    details: item.detalle ?? "",
+  }))
+
+  return NextResponse.json(result)
 }
 
 export async function POST(request: Request) {

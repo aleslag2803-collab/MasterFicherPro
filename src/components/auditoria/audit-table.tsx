@@ -3,14 +3,13 @@
 import { MoreVertical } from "lucide-react"
 import { Button } from "../ui/button"
 
-
-interface AuditLog {
-  id: number
+export interface AuditLog {
+  id: string
   user: string
   action: string
   resource: string
   type: string
-  timestamp: string
+  timestamp: string // ISO string
   details: string
 }
 
@@ -34,6 +33,19 @@ export default function AuditTable({ logs }: AuditTableProps) {
     }
   }
 
+  const formatDateTime = (iso: string) => {
+    if (!iso) return "-"
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return "-"
+    return d.toLocaleString("es-MX", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
   return (
     <div className="border border-border rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
@@ -51,18 +63,27 @@ export default function AuditTable({ logs }: AuditTableProps) {
           </thead>
           <tbody>
             {logs.map((log, index) => (
-              <tr key={log.id} className={index !== logs.length - 1 ? "border-b border-border" : ""}>
+              <tr
+                key={log.id}
+                className={index !== logs.length - 1 ? "border-b border-border" : ""}
+              >
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">{log.user}</span>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getActionColor(log.action)}`}>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${getActionColor(
+                      log.action
+                    )}`}
+                  >
                     {log.action}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-foreground">{log.resource}</td>
                 <td className="px-6 py-4 text-sm text-foreground">{log.type}</td>
-                <td className="px-6 py-4 text-sm text-foreground">{log.timestamp}</td>
+                <td className="px-6 py-4 text-sm text-foreground">
+                  {formatDateTime(log.timestamp)}
+                </td>
                 <td className="px-6 py-4 text-sm text-foreground">{log.details}</td>
                 <td className="px-6 py-4 text-center">
                   <Button variant="ghost" size="icon">
