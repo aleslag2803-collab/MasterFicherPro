@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import Sidebar from "../components/sidebar"
-
+import { Toaster } from "../components/ui/toaster" // 👈 OK
 
 const geist = Geist({ subsets: ["latin"] })
 const geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -31,6 +31,10 @@ export default function RootLayout({
             {children}
           </main>
         </div>
+
+        {/* 👇 AQUÍ, FUERA DEL WRAPPER PRINCIPAL */}
+        <Toaster />
+
         <Analytics />
       </body>
     </html>

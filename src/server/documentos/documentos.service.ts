@@ -36,6 +36,15 @@ export async function crearDocumentoService(body: any): Promise<Documento> {
     )
   }
 
+  const isPdf =
+    body.tipoArchivo === "application/pdf" ||
+    (typeof body.nombreArchivo === "string" &&
+      body.nombreArchivo.toLowerCase().endsWith(".pdf"))
+
+  if (!isPdf) {
+    throw new Error("Solo se permiten archivos PDF")
+  }
+
   const data: DocumentoCreateInput = {
     idUsuarioPropietario: body.idUsuarioPropietario,
     nombreArchivo: body.nombreArchivo,

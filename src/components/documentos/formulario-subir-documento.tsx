@@ -4,18 +4,30 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Upload, FileText } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card"
 import { Label } from "../ui/label"
 import { Input } from "../ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select"
 import { Textarea } from "../ui/textarea"
 import { Button } from "../ui/button"
 import { Switch } from "../ui/switch"
-import { useToast } from "../ui/use-toast" // 👈 toast
+import { useToast } from "@/src/hooks/use-toast"
 
 export function UploadDocumentForm() {
   const router = useRouter()
-  const { toast } = useToast() // 👈 hook de toast
+  const { toast } = useToast()
 
   const [isLoading, setIsLoading] = useState(false)
   const [fileName, setFileName] = useState("")
@@ -25,7 +37,6 @@ export function UploadDocumentForm() {
   const [tipoDocumento, setTipoDocumento] = useState("")
   const [organizacion, setOrganizacion] = useState("")
   const [descripcion, setDescripcion] = useState("")
-  const [error, setError] = useState<string | null>(null)
 
   // Estados para auditoría
   const [esAuditoria, setEsAuditoria] = useState(false)
@@ -35,36 +46,34 @@ export function UploadDocumentForm() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setError(null)
 
     if (!file) {
-      setError("Debes seleccionar un archivo")
+      toast({
+        title: "Archivo requerido",
+        description: "Debes seleccionar un archivo",
+      })
       return
     }
 
-    // Validar que sea PDF (por si acaso, además del onChange)
-    const isPdf =
-      file.type === "application/pdf" ||
-      file.name.toLowerCase().endsWith(".pdf")
-
-    if (!isPdf) {
-      setError("El archivo debe ser un PDF")
-      return
-    }
-
-    // Validación básica de auditoría
+    // Validación básica de auditoría (solo UI)
     if (
       esAuditoria &&
-      (!auditoriaNombreProceso || !auditoriaUsuarioCreador || !auditoriaFechaLimite)
+      (!auditoriaNombreProceso ||
+        !auditoriaUsuarioCreador ||
+        !auditoriaFechaLimite)
     ) {
-      setError("Completa todos los campos de la sección de auditoría")
+      toast({
+        title: "Datos incompletos",
+        description: "Completa todos los campos de la sección de auditoría",
+      })
       return
     }
 
     setIsLoading(true)
 
     try {
-      const idUsuarioPropietario = "10ed8a97-ee90-4339-81c6-1e079273a0e1"
+      // 🔹 OJO: usa aquí el id del usuario logueado cuando tengas auth
+      const idUsuarioPropietario = "061b75be-4f90-419f-9ead-506f0f6dbc30"
 
       const formData = new FormData()
       formData.append("file", file)
@@ -73,11 +82,10 @@ export function UploadDocumentForm() {
       formData.append("version", "1.0")
       formData.append(
         "etiquetas",
-        [tipoDocumento, organizacion].filter(Boolean).join(", ")
+        [tipoDocumento, organizacion].filter(Boolean).join(", "),
       )
       formData.append("resumen", descripcion || nombreDocumento)
 
-      // Campos nuevos
       formData.append("esAuditoria", String(esAuditoria))
       if (esAuditoria) {
         formData.append("auditoriaNombreProceso", auditoriaNombreProceso)
@@ -85,6 +93,7 @@ export function UploadDocumentForm() {
         formData.append("auditoriaFechaLimite", auditoriaFechaLimite)
       }
 
+      // 1️⃣ Crear documento
       const res = await fetch("/api/documentos", {
         method: "POST",
         body: formData,
@@ -92,19 +101,72 @@ export function UploadDocumentForm() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error ?? "Error al subir el documento")
+        const backendMsg = data?.error ?? "Error al subir el documento"
+
+        toast({
+          title: "Error al subir",
+          description: backendMsg,
+        })
+        return
       }
 
-      // ✅ Toast de éxito
-      toast({
-        title: "Documento subido",
-        description: "El documento se ha subido correctamente.",
-      })
+      const documento = await res.json()
+
+      // 2️⃣ Si es auditoría, crear proceso llamando a /api/audit
+      if (esAuditoria) {
+        try {
+          const auditRes = await fetch("/api/audit", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              document_id: documento.idDocumento,          // viene del POST /api/documentos
+              auditor_id: idUsuarioPropietario,           // por ahora usamos el mismo usuario
+              name: auditoriaNombreProceso,               // nombre del proceso desde el form
+              deadline: auditoriaFechaLimite,             // "YYYY-MM-DD"
+            }),
+          })
+
+          if (!auditRes.ok) {
+            const auditData = await auditRes.json().catch(() => ({}))
+            const auditMsg =
+              auditData?.error ?? "El documento se subió pero falló la auditoría"
+
+            toast({
+              title: "Proceso de auditoría",
+              description: auditMsg,
+            })
+          } else {
+            toast({
+              title: "Documento y auditoría creados",
+              description:
+                "El documento se ha subido y el proceso de auditoría se creó correctamente.",
+            })
+          }
+        } catch (err) {
+          console.error("Error llamando a /api/audit", err)
+          toast({
+            title: "Proceso de auditoría",
+            description:
+              "El documento se subió, pero hubo un error al crear el proceso de auditoría.",
+          })
+        }
+      } else {
+        // ✅ Solo documento (sin auditoría)
+        toast({
+          title: "Documento subido",
+          description: "El documento se ha subido correctamente.",
+        })
+      }
 
       router.push("/documentos")
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error al subir documento", err)
-      setError(err?.message ?? "Ocurrió un error al subir el documento")
+      toast({
+        title: "Error de conexión",
+        description: "Error de conexión al subir el documento",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -120,6 +182,7 @@ export function UploadDocumentForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Archivo */}
           <div className="space-y-2">
             <Label htmlFor="file">Archivo</Label>
             <div className="flex items-center gap-2">
@@ -129,23 +192,6 @@ export function UploadDocumentForm() {
                 accept="application/pdf"
                 onChange={(e) => {
                   const f = e.target.files?.[0] || null
-
-                  if (f) {
-                    const isPdf =
-                      f.type === "application/pdf" ||
-                      f.name.toLowerCase().endsWith(".pdf")
-
-                    if (!isPdf) {
-                      setError("El archivo debe ser un PDF")
-                      setFile(null)
-                      setFileName("")
-                      // Limpia el input
-                      e.target.value = ""
-                      return
-                    }
-                  }
-
-                  setError(null)
                   setFile(f)
                   setFileName(f?.name || "")
                 }}
@@ -163,6 +209,7 @@ export function UploadDocumentForm() {
             </div>
           </div>
 
+          {/* Nombre */}
           <div className="space-y-2">
             <Label htmlFor="name">Nombre del Documento</Label>
             <Input
@@ -174,6 +221,7 @@ export function UploadDocumentForm() {
             />
           </div>
 
+          {/* Tipo + Organización */}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="type">Tipo de Documento</Label>
@@ -221,7 +269,8 @@ export function UploadDocumentForm() {
             <div className="space-y-1">
               <Label htmlFor="esAuditoria">¿Es un documento para auditoría?</Label>
               <p className="text-xs text-muted-foreground">
-                Activa esta opción si el documento forma parte de un proceso de auditoría.
+                Activa esta opción si el documento forma parte de un proceso de
+                auditoría.
               </p>
             </div>
             <Switch
@@ -238,7 +287,9 @@ export function UploadDocumentForm() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="auditoriaNombreProceso">Nombre del proceso</Label>
+                  <Label htmlFor="auditoriaNombreProceso">
+                    Nombre del proceso
+                  </Label>
                   <Input
                     id="auditoriaNombreProceso"
                     placeholder="Ej: Auditoría interna 2025"
@@ -249,19 +300,25 @@ export function UploadDocumentForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="auditoriaUsuarioCreador">Usuario que crea el proceso</Label>
+                  <Label htmlFor="auditoriaUsuarioCreador">
+                    Usuario que crea el proceso
+                  </Label>
                   <Input
                     id="auditoriaUsuarioCreador"
                     placeholder="Ej: Juan Pérez"
                     value={auditoriaUsuarioCreador}
-                    onChange={(e) => setAuditoriaUsuarioCreador(e.target.value)}
+                    onChange={(e) =>
+                      setAuditoriaUsuarioCreador(e.target.value)
+                    }
                     required={esAuditoria}
                   />
                 </div>
               </div>
 
               <div className="space-y-2 md:w-1/3">
-                <Label htmlFor="auditoriaFechaLimite">Fecha límite del proceso</Label>
+                <Label htmlFor="auditoriaFechaLimite">
+                  Fecha límite del proceso
+                </Label>
                 <Input
                   id="auditoriaFechaLimite"
                   type="date"
@@ -273,6 +330,7 @@ export function UploadDocumentForm() {
             </div>
           )}
 
+          {/* Descripción */}
           <div className="space-y-2">
             <Label htmlFor="description">Descripción</Label>
             <Textarea
@@ -284,12 +342,7 @@ export function UploadDocumentForm() {
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-500">
-              {error}
-            </p>
-          )}
-
+          {/* Botones */}
           <div className="flex gap-2">
             <Button type="submit" disabled={isLoading} className="flex-1">
               <Upload className="mr-2 h-4 w-4" />

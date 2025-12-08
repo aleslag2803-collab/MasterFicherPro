@@ -37,16 +37,30 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // 👇 VALIDACIÓN DE QUE SEA PDF
+    const mimeType = file.type
+    const fileName = file.name.toLowerCase()
+
+    const isPdf =
+      mimeType === "application/pdf" || fileName.endsWith(".pdf")
+
+    if (!isPdf) {
+      return NextResponse.json(
+        { error: "Solo se permiten archivos PDF" },
+        { status: 400 }
+      )
+    }
+
     const arrayBuffer = (await file.arrayBuffer()) as ArrayBuffer
     const uint8 = new Uint8Array(arrayBuffer)
-    
+
     const bodyForService = {
       idUsuarioPropietario,
       nombreArchivo: file.name,
-      tipoArchivo: file.type || "application/pdf",
-      contenidoArchivo: uint8,        // 👈 ahora es Uint8Array
+      // 👇 ya no pongas fallback a PDF, respeta el mime
+      tipoArchivo: mimeType,
+      contenidoArchivo: uint8,
       tamanoBytes: uint8.byteLength,
-      // opcionales desde el formData
       estado: (formData.get("estado") as string) || "ACTIVO",
       version: (formData.get("version") as string) || undefined,
       etiquetas: (formData.get("etiquetas") as string) || undefined,
@@ -64,3 +78,4 @@ export async function POST(req: NextRequest) {
     )
   }
 }
+
