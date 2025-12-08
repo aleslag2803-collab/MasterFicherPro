@@ -1,6 +1,6 @@
 "use client"
 
-
+import { useRouter } from "next/navigation"
 import { Search, Filter, Upload } from "lucide-react"
 import { Button } from "../ui/button"
 
@@ -11,6 +11,8 @@ interface AuditFiltersProps {
 }
 
 export default function AuditFilters({ searchTerm, onSearch, logCount }: AuditFiltersProps) {
+  const router = useRouter()
+
   return (
     <div className="mb-6 space-y-4">
       <div className="flex gap-4 items-center">
@@ -28,7 +30,10 @@ export default function AuditFilters({ searchTerm, onSearch, logCount }: AuditFi
           <Filter className="w-4 h-4" />
           Filtros
         </Button>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+        <Button
+          className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+          onClick={() => router.push("/documentos/subir")}
+        >
           <Upload className="w-4 h-4" />
           Subir Documento
         </Button>
