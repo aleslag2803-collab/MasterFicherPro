@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import bcrypt from "bcryptjs";
+import argon2 from "argon2";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,18 +21,15 @@ export async function POST(req: NextRequest) {
     });
 
     if (!usuario) {
-      return NextResponse.json(
-        { error: "Credenciales inválidas" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Usuario inválido" }, { status: 401 });
     }
 
     // Comparar contraseña
-    const esValido = await bcrypt.compare(password, usuario.passwordHash);
+    const esValido = await argon2.verify(usuario.passwordHash, password);
 
     if (!esValido) {
       return NextResponse.json(
-        { error: "Credenciales inválidas" },
+        { error: "Contraseña incorrecta" },
         { status: 401 }
       );
     }
