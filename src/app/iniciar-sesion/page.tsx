@@ -1,22 +1,42 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import Link from "next/link"
-import { useState } from "react"
-import { Mail, Lock } from "lucide-react"
+import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Mail, Lock } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const [correo, setCorreo] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    // Aquí iría la lógica de autenticación
-    console.log("Email:", email, "Password:", password)
-    setTimeout(() => setIsLoading(false), 1000)
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+
+    setError("");
+
+    const res = await fetch("/api/iniciar-sesion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ correo, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.error || "Error desconocido");
+      return;
+    }
+
+    // Guardar usuario en sessionStorage (autenticación básica)
+    sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
+
+    // Redirigir al dashboard
+    router.push("/dashboard");
   }
 
   return (
@@ -26,21 +46,32 @@ export default function LoginPage() {
           {/* Shield Icon */}
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-8 h-8 text-white"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
               </svg>
             </div>
           </div>
 
           {/* Title */}
-          <h1 className="text-3xl font-bold text-center mb-2">Iniciar Sesión</h1>
-          <p className="text-center text-gray-600 text-sm mb-6">Ingresa tus credenciales para acceder al sistema</p>
+          <h1 className="text-3xl font-bold text-center mb-2">
+            Iniciar Sesión
+          </h1>
+          <p className="text-center text-gray-600 text-sm mb-6">
+            Ingresa tus credenciales para acceder al sistema
+          </p>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Correo Electrónico
               </label>
               <div className="relative">
@@ -49,8 +80,8 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="Usuario@ejemplo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={correo}
+                  onChange={(e) => setCorreo(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                   required
                 />
@@ -59,7 +90,10 @@ export default function LoginPage() {
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Contraseña
               </label>
               <div className="relative">
@@ -76,9 +110,14 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+
             {/* Forgot Password Link */}
             <div className="flex justify-end">
-              <Link href="/recuperar_contraseña" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+              <Link
+                href="/recuperar_contraseña"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
                 ¿Olvidaste tu contraseña?
               </Link>
             </div>
@@ -96,12 +135,15 @@ export default function LoginPage() {
           {/* Register Link */}
           <p className="text-center text-gray-600 text-sm mt-6">
             ¿No tienes cuenta?{" "}
-            <Link href="/crear-cuenta" className="text-blue-600 hover:text-blue-700 font-semibold">
+            <Link
+              href="/crear-cuenta"
+              className="text-blue-600 hover:text-blue-700 font-semibold"
+            >
               Registrate aquí
             </Link>
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }
