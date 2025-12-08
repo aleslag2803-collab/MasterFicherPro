@@ -6,6 +6,8 @@ import { Separator } from "../ui/separator"
 import { Badge } from "../ui/badge"
 import { Calendar, FileText, Building, User } from "lucide-react"
 import { DocumentViewer } from "../documentos/documentos-viewer"
+import { Button } from "../ui/button"
+
 
 type Documento = {
   idDocumento: string
@@ -53,9 +55,18 @@ interface AuditoriaDetailsProps {
 }
 
 export function AuditoriaDetails({ auditId }: AuditoriaDetailsProps) {
+
   const [audit, setAudit] = useState<ProcesoAuditoriaDetalle | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // 👇 NUEVOS estados
+  const [estadoLocal, setEstadoLocal] = useState<string>("en_proceso")
+  const [savingEstado, setSavingEstado] = useState(false)
+
+  const [newComment, setNewComment] = useState("")
+  const [savingComment, setSavingComment] = useState(false)
+  const [commentError, setCommentError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -70,6 +81,8 @@ export function AuditoriaDetails({ auditId }: AuditoriaDetailsProps) {
 
         const data = await res.json()
         setAudit(data)
+        setEstadoLocal(data.estado)
+
       } catch (err: any) {
         console.error("Error cargando detalles de auditoría", err)
         setError(err?.message ?? "No se pudo cargar la auditoría")
@@ -119,9 +132,15 @@ export function AuditoriaDetails({ auditId }: AuditoriaDetailsProps) {
     if (!estado) return "-"
     const lower = estado.toLowerCase()
     if (lower === "en_proceso") return "En progreso"
-    if (lower === "finalizado") return "Aprobado"
+    if (lower === "finalizado" || lower === "aprobado" || lower === "aceptado")
+      return "Aprobado"
     if (lower === "cancelado") return "Cancelado"
     return estado
+  }
+  
+  const isFinalState = (estado: string) => {
+    const lower = estado.toLowerCase()
+    return lower === "aprobado" || lower === "finalizado" || lower === "aceptado"
   }
 
   const normalizeEstadoDocumento = (estado?: string | null) => {
@@ -144,6 +163,78 @@ export function AuditoriaDetails({ auditId }: AuditoriaDetailsProps) {
       return "Imagen"
     }
     return "Documento"
+  }
+
+  const handleEstadoChange = async (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    if (!audit) return
+    const nuevoEstado = e.target.value
+    setEstadoLocal(nuevoEstado)
+
+    try {
+      setSavingEstado(true)
+
+      const res = await fetch(`/api/audit/${auditId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: nuevoEstado }),
+      })
+
+      if (!res.ok) {
+        throw new Error("No se pudo actualizar el estado")
+      }
+
+      const updated = await res.json()
+      setAudit(updated)
+      setEstadoLocal(updated.estado)
+    } catch (err) {
+      console.error("Error al actualizar estado de auditoría", err)
+      // opcional: podríamos revertir el estadoLocal si falla
+    } finally {
+      setSavingEstado(false)
+    }
+  }
+
+  const handleSaveComment = async () => {
+    if (!audit) return
+    if (!newComment.trim()) return
+
+    try {
+      setSavingComment(true)
+      setCommentError(null)
+
+      const userId = audit.documento.idUsuarioPropietario
+
+      const res = await fetch(`/api/audit/${auditId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          comentario: newComment.trim(),
+          userId,
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error ?? "No se pudo guardar el comentario")
+      }
+
+      const created: Comentario = await res.json()
+
+      setAudit({
+        ...audit,
+        comentarios: [...audit.comentarios, created],
+      })
+      setNewComment("")
+    } catch (err: any) {
+      console.error("Error al guardar comentario", err)
+      setCommentError(
+        err?.message ?? "Error desconocido al guardar el comentario"
+      )
+    } finally {
+      setSavingComment(false)
+    }
   }
 
   if (isLoading) {
@@ -253,9 +344,25 @@ export function AuditoriaDetails({ auditId }: AuditoriaDetailsProps) {
                 <p className="text-sm font-medium text-muted-foreground">
                   Estado general
                 </p>
-                <Badge variant="outline" className="rounded-full px-3 py-1">
-                  {normalizeEstadoProceso(audit.estado)}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <select
+                    className="rounded-md border border-border bg-background px-3 py-1 text-sm"
+                    value={estadoLocal}
+                    onChange={handleEstadoChange}
+                    disabled={savingEstado}
+                  >
+                    <option value="en_proceso">En progreso</option>
+                    <option value="aprobado">Aprobado</option>
+                  </select>
+                  {savingEstado && (
+                    <span className="text-xs text-muted-foreground">
+                      Guardando...
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Cuando el estado es <span className="font-semibold">Aprobado</span> ya no se reciben cambios en este apartado.
+                </p>
               </div>
 
               <Separator />
@@ -283,6 +390,47 @@ export function AuditoriaDetails({ auditId }: AuditoriaDetailsProps) {
               <CardTitle>Comentarios</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Formulario para nuevo comentario */}
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Agrega un comentario sobre esta auditoría.
+                </p>
+                <textarea
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  rows={3}
+                  placeholder="Escribe un comentario..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  disabled={savingComment || isFinalState(estadoLocal)}
+                />
+                <div className="flex items-center justify-between gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleSaveComment}
+                    disabled={
+                      savingComment ||
+                      !newComment.trim() ||
+                      isFinalState(estadoLocal)
+                    }
+                  >
+                    {savingComment ? "Guardando..." : "Guardar comentario"}
+                  </Button>
+
+                  {isFinalState(estadoLocal) && (
+                    <p className="text-[11px] text-muted-foreground">
+                      La auditoría está aprobada; ya no se permiten nuevos
+                      comentarios.
+                    </p>
+                  )}
+                </div>
+                {commentError && (
+                  <p className="text-xs text-destructive">{commentError}</p>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Lista de comentarios */}
               {audit.comentarios.length === 0 && (
                 <p className="text-sm text-muted-foreground">
                   Aún no hay comentarios para este proceso de auditoría.

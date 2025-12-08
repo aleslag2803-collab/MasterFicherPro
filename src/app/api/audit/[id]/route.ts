@@ -45,3 +45,54 @@ export async function GET(
     )
   }
 }
+
+// 👇 NUEVO: actualizar estado del proceso
+export async function PATCH(
+  req: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{ id: string }>
+  }
+) {
+  const { id } = await params
+
+  try {
+    const body = await req.json()
+    const { estado } = body
+
+    if (!estado) {
+      return NextResponse.json(
+        { error: "El campo 'estado' es obligatorio" },
+        { status: 400 }
+      )
+    }
+
+    const updated = await prisma.procesosAuditoria.update({
+      where: { idProcesoAuditoria: id },
+      data: {
+        estado,
+        fechaActualizacion: new Date(), // marca la última actualización
+      },
+      include: {
+        documento: true,
+        auditor: true,
+        comentarios: {
+          include: { usuario: true },
+          orderBy: { fechaComentario: "asc" },
+        },
+      },
+    })
+
+    return NextResponse.json(updated, { status: 200 })
+  } catch (error: any) {
+    console.error("Error en PATCH /api/audit/[id]", error)
+    return NextResponse.json(
+      {
+        error:
+          error?.message ?? "Error al actualizar el proceso de auditoría",
+      },
+      { status: 500 }
+    )
+  }
+}
