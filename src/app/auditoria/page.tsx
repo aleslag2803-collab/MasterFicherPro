@@ -67,10 +67,30 @@ export default function AuditoriaPage() {
     setFilteredAudits(filtered)
   }, [searchTerm, audits])
 
-  const handleDelete = (id: string) => {
-    // Aquí luego puedes abrir un modal de confirmación y hacer DELETE /api/audit/[id]
-    console.log("Eliminar proceso de auditoría", id)
+  const handleDelete = async (id: string) => {
+    const confirmar = window.confirm(
+      "¿Seguro que deseas eliminar este proceso de auditoría?"
+    )
+    if (!confirmar) return
+
+    try {
+      const res = await fetch(`/api/audit/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!res.ok) {
+        throw new Error("No se pudo eliminar la auditoría")
+      }
+
+      // Actualizar estado local: quitarla de ambas listas
+      setAudits((prev) => prev.filter((a) => a.id !== id))
+      setFilteredAudits((prev) => prev.filter((a) => a.id !== id))
+    } catch (err) {
+      console.error("Error al eliminar auditoría", err)
+      alert("Ocurrió un error al eliminar la auditoría.")
+    }
   }
+
 
   return (
     <div className="space-y-4">

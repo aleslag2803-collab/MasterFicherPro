@@ -96,3 +96,40 @@ export async function PATCH(
     )
   }
 }
+
+//Funcion Delete
+export async function DELETE(
+  req: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{ id: string }>
+  }
+) {
+  const { id } = await params
+
+  try {
+    const updated = await prisma.procesosAuditoria.update({
+      where: { idProcesoAuditoria: id },
+      data: {
+        esEliminado: true,
+        fechaActualizacion: new Date(),
+      },
+    })
+
+    return NextResponse.json(
+      { success: true, id: updated.idProcesoAuditoria },
+      { status: 200 }
+    )
+  } catch (error: any) {
+    console.error("Error en DELETE /api/audit/[id]", error)
+    return NextResponse.json(
+      {
+        error:
+          error?.message ?? "Error al eliminar (lógicamente) la auditoría",
+      },
+      { status: 500 }
+    )
+  }
+}
+

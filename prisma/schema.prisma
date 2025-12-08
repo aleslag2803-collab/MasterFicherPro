@@ -87,6 +87,7 @@ model ProcesosAuditoria {
   fechaLimite        DateTime?
   fechaCreacion      DateTime               @default(now())
   fechaActualizacion DateTime               @default(now())
+  esEliminado        Boolean   @default(false)
   comentarios        ComentariosAuditoria[]
   criterios          CriteriosAuditoria[]
   decisiones         DecisionesAuditoria[]
