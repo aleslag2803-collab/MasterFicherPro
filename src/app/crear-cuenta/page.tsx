@@ -14,6 +14,7 @@ export default function CrearCuenta() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [mensaje, setMensaje] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -27,9 +28,8 @@ export default function CrearCuenta() {
     e.preventDefault();
     setLoading(true);
 
-    // Validar contraseñas iguales
     if (formData.password !== formData.confirmPassword) {
-      alert("Las contraseñas no coinciden");
+      setMensaje("❌ Las contraseñas no coinciden");
       setLoading(false);
       return;
     }
@@ -46,7 +46,20 @@ export default function CrearCuenta() {
     });
 
     const data = await response.json();
-    console.log(data);
+
+    if (!response.ok) {
+      setMensaje(`❌ Error: ${data.message || "No se pudo crear la cuenta"}`);
+      setLoading(false);
+      return;
+    }
+
+    // ✔ Todo bien: mostrar mensaje de éxito
+    setMensaje("✅ Cuenta creada correctamente, redirigiendo...");
+
+    // ✔ Esperar 2 segundos y luego redirigir
+    setTimeout(() => {
+      window.location.href = "/iniciar-sesion";
+    }, 2000);
 
     setLoading(false);
   };
@@ -219,6 +232,11 @@ export default function CrearCuenta() {
           >
             {loading ? "Creando Cuenta..." : "Crear Cuenta"}
           </button>
+          {mensaje && (
+            <p className="text-center mt-3 text-sm font-semibold text-blue-600">
+              {mensaje}
+            </p>
+          )}
         </form>
 
         {/* Link to Login */}
