@@ -1,6 +1,5 @@
 "use client"
 
-
 import UserFilters from "@/src/components/usuarios/users-filters"
 import UsersHeader from "@/src/components/usuarios/users-header"
 import UsersTable from "@/src/components/usuarios/users-table"
@@ -11,8 +10,15 @@ interface Usuario {
   nombre: string
   correo: string
   rol: string
-  estado: boolean      // 👈 en Prisma es Boolean
-  fechaRegistro: string // llega como string del JSON
+  estado: boolean
+  fechaRegistro: string
+}
+
+interface NewUserData {
+  name: string
+  email: string
+  role: string
+  active: boolean
 }
 
 export default function UsuariosPage() {
@@ -21,29 +27,28 @@ export default function UsuariosPage() {
   const [filteredUsers, setFilteredUsers] = useState<Usuario[]>([])
   const [loading, setLoading] = useState(true)
 
-  // 🔹 Obtener usuarios desde la API (que ya usa controller + service)
+  // 🔹 Obtener usuarios desde la API
   useEffect(() => {
-  const fetchUsuarios = async () => {
-    try {
-      const res = await fetch("/api/usuarios", {
-        method: "GET",
-        cache: "no-store",
-      })
-      if (!res.ok) throw new Error("Error al cargar usuarios")
-      const data = await res.json()
-      console.log("USUARIOS DESDE API", data) // 👈 añade esto
-      setUsuarios(data)
-      setFilteredUsers(data)
-    } catch (error) {
-      console.error("Error al obtener usuarios:", error)
-    } finally {
-      setLoading(false)
+    const fetchUsuarios = async () => {
+      try {
+        const res = await fetch("/api/usuarios", {
+          method: "GET",
+          cache: "no-store",
+        })
+        if (!res.ok) throw new Error("Error al cargar usuarios")
+        const data = await res.json()
+        console.log("USUARIOS DESDE API", data)
+        setUsuarios(data)
+        setFilteredUsers(data)
+      } catch (error) {
+        console.error("Error al obtener usuarios:", error)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
 
-  fetchUsuarios()
-}, [])
-
+    fetchUsuarios()
+  }, [])
 
   const handleSearch = (term: string) => {
     setSearchTerm(term)
@@ -53,6 +58,56 @@ export default function UsuariosPage() {
         user.correo.toLowerCase().includes(term.toLowerCase()),
     )
     setFilteredUsers(filtered)
+  }
+
+  // 🔹 AGREGAR ESTA FUNCIÓN PARA CREAR USUARIOS
+  const handleCreateUser = async (userData: NewUserData) => {
+    try {
+      console.log("Creando usuario con datos:", userData)
+      
+      // Aquí debes implementar la llamada a tu API para crear usuario
+      const res = await fetch("/api/usuarios", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nombre: userData.name,
+          correo: userData.email,
+          rol: userData.role,
+          estado: userData.active,
+        }),
+      })
+
+      if (res.ok) {
+        const nuevoUsuario = await res.json()
+        
+        // Actualizar el estado local
+        setUsuarios([...usuarios, nuevoUsuario])
+        
+        // Refiltrar si hay búsqueda activa
+        if (searchTerm) {
+          const filtered = [...usuarios, nuevoUsuario].filter(
+            (user) =>
+              user.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              user.correo.toLowerCase().includes(searchTerm.toLowerCase()),
+          )
+          setFilteredUsers(filtered)
+        } else {
+          setFilteredUsers(prev => [...prev, nuevoUsuario])
+        }
+
+        alert("Usuario creado exitosamente")
+        return true
+      } else {
+        alert("Error al crear usuario")
+        return false
+      }
+    } catch (error) {
+      console.error("Error al crear usuario:", error)
+      alert("Error al crear usuario")
+      return false
+    }
   }
 
   if (loading) {
@@ -72,10 +127,12 @@ export default function UsuariosPage() {
           <p className="text-muted-foreground">Administra los usuarios del sistema</p>
         </div>
 
+        {/* 🔹 PASA LA CUARTA PROP QUE FALTA */}
         <UserFilters
           searchTerm={searchTerm}
           onSearch={handleSearch}
           userCount={filteredUsers.length}
+          onCreateUser={handleCreateUser} // ← ¡ESTA ES LA PROP QUE TE FALTA!
         />
 
         <UsersTable
