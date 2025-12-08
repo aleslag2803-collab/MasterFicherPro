@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/src/lib/prisma"
+import { getProcesosAuditoriaController } from "@/src/server/auditoria/auditoria.controller"
 
+// GET /api/audit -> lista procesos de auditoría
+export async function GET() {
+  const result = await getProcesosAuditoriaController()
+  return NextResponse.json(result.body, { status: result.status })
+}
+
+// POST /api/audit -> crea nuevo proceso de auditoría
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -11,7 +19,7 @@ export async function POST(request: NextRequest) {
       name,
       deadline,
       initial_comment,     // opcional
-      user_id_for_comment, // opcional: usuario (admin) que deja el comentario
+      user_id_for_comment, // opcional
     } = body
 
     if (!document_id) {
@@ -21,7 +29,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 1) Verificar que el documento exista
+    // Verificar que el documento exista
     const documento = await prisma.documentos.findUnique({
       where: { idDocumento: document_id },
     })
@@ -33,7 +41,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 2) (Opcional) validar que el auditor exista si te mandan auditor_id
+    // Validar que el auditor exista si se envía
     if (auditor_id) {
       const auditor = await prisma.usuarios.findUnique({
         where: { idUsuario: auditor_id },
@@ -47,28 +55,27 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3) Crear proceso de auditoría
+    // Crear proceso de auditoría
     const proceso = await prisma.procesosAuditoria.create({
       data: {
         idDocumento: document_id,
         idAuditor: auditor_id ?? null,
         nombre: name ?? `Auditoría de ${documento.nombreArchivo}`,
-        estado: "en_proceso", // default en Prisma, pero lo dejamos explícito
+        estado: "en_proceso",
         fechaLimite: deadline ? new Date(deadline) : null,
       },
     })
 
-    // 4) Marcar el documento como de auditoría
+    // Marcar el documento como auditoría
     await prisma.documentos.update({
       where: { idDocumento: document_id },
       data: { esAuditoria: true },
     })
 
-    // 5) Crear comentario inicial SOLO si mandan comentario y user
+    // Comentario inicial opcional
     let comentarioInicial = null
 
     if (initial_comment && user_id_for_comment) {
-      // Validar que el usuario del comentario exista
       const user = await prisma.usuarios.findUnique({
         where: { idUsuario: user_id_for_comment },
       })
