@@ -285,15 +285,62 @@ export function AuditoriaDetails({ auditId }: AuditoriaDetailsProps) {
 
   const doc = audit.documento
 
-  return (
+    return (
     <div className="space-y-6">
       {/* Arriba: vista previa + panel de auditoría */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        {/* Columna izquierda: documento + info del documento */}
+        <div className="lg:col-span-2 space-y-4">
           {/* Vista previa del documento (igual que en Documentos) */}
           <DocumentViewer documentId={doc.idDocumento} />
+
+          {/* Información del documento, SOLO debajo del visor */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Información del documento</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Tipo:</span>
+                  <span className="font-medium">
+                    {typeLabelFromMime(doc.tipoArchivo)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Building className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Organización:</span>
+                  {/* Cuando conecten organizaciones aquí se reemplaza el "-" */}
+                  <span className="font-medium">-</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">
+                    Fecha de subida:
+                  </span>
+                  <span className="font-medium">
+                    {formatDateTime(doc.fechaSubida)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">
+                    Subido por (id usuario):
+                  </span>
+                  <span className="font-mono text-xs">
+                    {doc.idUsuarioPropietario}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
+        {/* Columna derecha: panel de auditoría + comentarios */}
         <div className="space-y-4">
           {/* Panel de auditoría */}
           <Card>
@@ -361,7 +408,9 @@ export function AuditoriaDetails({ auditId }: AuditoriaDetailsProps) {
                   )}
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Cuando el estado es <span className="font-semibold">Aprobado</span> ya no se reciben cambios en este apartado.
+                  Cuando el estado es{" "}
+                  <span className="font-semibold">Aprobado</span> ya no se
+                  reciben cambios en este apartado.
                 </p>
               </div>
 
@@ -462,105 +511,6 @@ export function AuditoriaDetails({ auditId }: AuditoriaDetailsProps) {
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      {/* Abajo: información del documento (antes estaba a la derecha) */}
-      <div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Información del documento</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Tipo:</span>
-                <span className="font-medium">
-                  {typeLabelFromMime(doc.tipoArchivo)}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 text-sm">
-                <Building className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Organización:</span>
-                {/* Aún no está ligada en el modelo; placeholder */}
-                <span className="font-medium">-</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Fecha de subida:</span>
-                <span className="font-medium">
-                  {formatDateTime(doc.fechaSubida)}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 text-sm">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">
-                  Subido por (id usuario):
-                </span>
-                <span className="font-mono text-xs">
-                  {doc.idUsuarioPropietario}
-                </span>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Estado del documento</p>
-              <Badge variant="outline" className="rounded-full px-3 py-1">
-                {normalizeEstadoDocumento(doc.estado)}
-              </Badge>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Tamaño</p>
-              <p className="text-sm text-muted-foreground">
-                {formatSize(doc.tamanoBytes)}
-              </p>
-            </div>
-
-            {doc.version && (
-              <>
-                <Separator />
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Versión</p>
-                  <p className="text-sm text-muted-foreground">
-                    {doc.version}
-                  </p>
-                </div>
-              </>
-            )}
-
-            {doc.etiquetas && (
-              <>
-                <Separator />
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Etiquetas</p>
-                  <p className="text-sm text-muted-foreground">
-                    {doc.etiquetas}
-                  </p>
-                </div>
-              </>
-            )}
-
-            {doc.resumen && (
-              <>
-                <Separator />
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Resumen</p>
-                  <p className="text-sm text-muted-foreground">
-                    {doc.resumen}
-                  </p>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   )
