@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { deleteDocumentoController, getDocumentoPorIdController } from "@/src/server/documentos/documentos.controller"
+import {
+  deleteDocumentoController,
+  getDocumentoPorIdController,
+} from "@/src/server/documentos/documentos.controller"
 
 export const runtime = "nodejs"
 
+// GET /api/documentos/[id]
 export async function GET(
   req: NextRequest,
   {
@@ -11,7 +15,7 @@ export async function GET(
     params: Promise<{ id: string }>
   }
 ) {
-  const { id } = await params          // 👈 desempaquetamos la promesa
+  const { id } = await params
   const idDocumento = id
   const mode = req.nextUrl.searchParams.get("mode") ?? "blob"
 
@@ -40,17 +44,19 @@ export async function GET(
   })
 }
 
+// DELETE /api/documentos/[id]
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  {
+    params,
+  }: {
+    params: Promise<{ id: string }>
+  }
 ) {
-  const idDocumento = params.id
+  const { id } = await params
+  const idDocumento = id
 
   const result = await deleteDocumentoController(idDocumento)
 
-  if (result.status !== 200) {
-    return NextResponse.json(result.body, { status: result.status })
-  }
-
-  return NextResponse.json(result.body, { status: 200 })
+  return NextResponse.json(result.body, { status: result.status })
 }

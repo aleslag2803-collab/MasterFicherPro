@@ -2,9 +2,11 @@ import {
   createDocumento,
   findAllDocumentos,
   findDocumentoById,
+  markDocumentoAsEliminado,   // 👈 nuevo import
 } from "./documentos.repository"
 import { Documento, DocumentoCreateInput } from "./documentos.model"
-import { deleteDocumentoById } from "./documentos.repository"
+// ❌ ya no usamos deleteDocumentoById
+// import { deleteDocumentoById } from "./documentos.repository"
 
 export async function listarDocumentosService(): Promise<Documento[]> {
   const documentos = await findAllDocumentos()
@@ -61,13 +63,14 @@ export async function crearDocumentoService(body: any): Promise<Documento> {
   return documento
 }
 
-export async function eliminarDocumentoService(idDocumento: string): Promise<boolean> {
+// 🔹 Soft delete: esEliminado = true
+export async function eliminarDocumentoService(
+  idDocumento: string
+): Promise<boolean> {
   if (!idDocumento) {
     throw new Error("idDocumento es obligatorio")
   }
 
-  // Llamar al repositorio para eliminar el documento
-  const result = await deleteDocumentoById(idDocumento)
-  return result
+  const result = await markDocumentoAsEliminado(idDocumento)
+  return !!result        // true si se actualizó, false si falló / no existe
 }
-

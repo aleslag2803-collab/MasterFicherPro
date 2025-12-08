@@ -1,18 +1,19 @@
-// src/server/documentos/documentos.repository.ts
-
 import { prisma } from "@/src/lib/prisma"
 import { Documento, DocumentoCreateInput } from "./documentos.model"
 
-// Obtener todos los documentos
+// 🔹 Obtener todos los documentos (solo NO eliminados)
 export async function findAllDocumentos(): Promise<Documento[]> {
   const documentos = await prisma.documentos.findMany({
+    where: {
+      esEliminado: false,          // 👈 solo activos
+    },
     orderBy: { fechaSubida: "desc" },
   })
 
   return documentos as unknown as Documento[]
 }
 
-// Obtener un documento por id
+// 🔹 Obtener un documento por id
 export async function findDocumentoById(
   idDocumento: string
 ): Promise<Documento | null> {
@@ -23,7 +24,7 @@ export async function findDocumentoById(
   return documento as unknown as Documento | null
 }
 
-// Crear un documento
+// 🔹 Crear un documento
 export async function createDocumento(
   data: DocumentoCreateInput
 ): Promise<Documento> {
@@ -32,32 +33,40 @@ export async function createDocumento(
       idUsuarioPropietario: data.idUsuarioPropietario,
       nombreArchivo: data.nombreArchivo,
       tipoArchivo: data.tipoArchivo,
-      contenidoArchivo: data.contenidoArchivo as any, 
+      contenidoArchivo: data.contenidoArchivo as any,
       tamanoBytes: data.tamanoBytes,
       version: data.version ?? null,
       estado: data.estado,
       etiquetas: data.etiquetas ?? null,
       resumen: data.resumen ?? null,
       esAuditoria: false,
-      esEliminado: false,
+      esEliminado: false,          // 👈 siempre inicia en false
     },
   })
 
   return nuevoDocumento as unknown as Documento
 }
 
-// Eliminar un documento por su id
-export async function deleteDocumentoById(idDocumento: string): Promise<boolean> {
+// ❌ Antes: delete físico
+// export async function deleteDocumentoById(idDocumento: string): Promise<boolean> { ... }
+
+// ✅ Ahora: soft delete → esEliminado = true
+export async function markDocumentoAsEliminado(
+  idDocumento: string
+): Promise<Documento | null> {
   try {
-    const documento = await prisma.documentos.delete({
-      where: {
-        idDocumento,
+    const documento = await prisma.documentos.update({
+      where: { idDocumento },
+      data: {
+        esEliminado: true,
+        // opcional: también podrías cambiar estado
+        // estado: "INACTIVO",
       },
     })
 
-    return !!documento  // Retorna true si el documento fue eliminado
+    return documento as unknown as Documento
   } catch (error) {
-    console.error("Error eliminando el documento", error)
-    return false  // Retorna false si algo falla
+    console.error("Error marcando documento como eliminado", error)
+    return null
   }
 }
