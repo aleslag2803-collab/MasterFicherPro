@@ -17,6 +17,7 @@ import {
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
+import { useEliminarOrganizacion } from "./BotonEliminar";
 
 export function OrganizationsGrid() {
   const [organizations, setOrganizations] = useState<any[]>([]);
@@ -41,6 +42,7 @@ export function OrganizationsGrid() {
   }, []);
 
   if (loading) return <p className="text-center">Cargando organizaciones...</p>;
+  const eliminar = useEliminarOrganizacion();
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -69,7 +71,19 @@ export function OrganizationsGrid() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
                   <DropdownMenuItem>Editar</DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={async () => {
+                      const ok = await eliminar(org.idOrganizacion);
+                      if (ok) {
+                        setOrganizations((prev) =>
+                          prev.filter(
+                            (o) => o.idOrganizacion !== org.idOrganizacion
+                          )
+                        );
+                      }
+                    }}
+                  >
                     Eliminar
                   </DropdownMenuItem>
                 </DropdownMenuContent>
