@@ -25,7 +25,10 @@ export async function PUT(
   const result = await putUsuarioController(id, data)
   return NextResponse.json(result.body, { status: result.status })
 }
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const { id } = await params
 
   const result = await deleteUsuarioController(id)

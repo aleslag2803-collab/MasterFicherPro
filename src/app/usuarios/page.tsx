@@ -97,6 +97,11 @@ export default function UsuariosPage() {
           setFilteredUsers(prev => [...prev, nuevoUsuario])
         }
 
+        // Despachar evento con usuario completo
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("usuarios:created", { detail: nuevoUsuario }))
+        }
+
         alert("Usuario creado exitosamente")
         return true
       } else {

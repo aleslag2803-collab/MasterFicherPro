@@ -5,9 +5,9 @@ import { getOrganizacionesPorUsuarioController } from "@/src/server/organizacion
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { idUsuario: string } },
+  { params }: { params: Promise<{ idUsuario: string }> }
 ) {
-  const idUsuario = params.idUsuario
+  const { idUsuario } = await params
   const result = await getOrganizacionesPorUsuarioController(idUsuario)
   return NextResponse.json(result.body, { status: result.status })
 }

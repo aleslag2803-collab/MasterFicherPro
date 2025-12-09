@@ -5,9 +5,9 @@ import { getJerarquiaController } from "@/src/server/organizaciones/organizacion
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { padreId: string } },
+  { params }: { params: Promise<{ padreId: string }> }
 ) {
-  const padreId = params.padreId
+  const { padreId } = await params
   const result = await getJerarquiaController(padreId)
   return NextResponse.json(result.body, { status: result.status })
 }

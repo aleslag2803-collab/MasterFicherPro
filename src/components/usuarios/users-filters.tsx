@@ -10,7 +10,7 @@ interface UserFiltersProps {
   searchTerm: string
   onSearch: (term: string) => void
   userCount: number
-  onCreateUser: (user: any) => void
+  onCreateUser: (user: any) => Promise<boolean>
 }
 
 export default function UserFilters({ searchTerm, onSearch, userCount, onCreateUser }: UserFiltersProps) {

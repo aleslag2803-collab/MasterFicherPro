@@ -10,7 +10,7 @@ import { useToast } from "@/src/hooks/use-toast"
 interface CreateUserModalProps {
   open: boolean
   onClose: () => void
-  onCreate: (user: any) => void
+  onCreate: (user: any) => Promise<boolean>
 }
 
 export default function CreateUserModal({ open, onClose, onCreate }: CreateUserModalProps) {
@@ -66,21 +66,6 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
           title: "Usuario creado",
           description: "El usuario se ha creado correctamente.",
         })
-            try {
-              const createdUser = typeof success === "object" ? success : {
-                nombre: name,
-                correo: email,
-                rol: role === "administrador" ? "Administrador" : "Lector",
-                estado: active === "si",
-              }
-              // emitir evento global para que tablas/listados se actualicen
-              if (typeof window !== "undefined") {
-                window.dispatchEvent(new CustomEvent("usuarios:created", { detail: createdUser }))
-              }
-            } catch (e) {
-              // no bloquear si falla el dispatch
-              console.error("Error dispatching usuarios:created event", e)
-            }
       } else {
         toast({
           title: "No se pudo crear",
