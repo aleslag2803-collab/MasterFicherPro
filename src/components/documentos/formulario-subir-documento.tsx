@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Upload, FileText } from "lucide-react"
 import {
@@ -25,6 +25,17 @@ import { Button } from "../ui/button"
 import { Switch } from "../ui/switch"
 import { useToast } from "@/src/hooks/use-toast"
 
+type Organizacion = {
+  idOrganizacion: string
+  nombre: string
+}
+
+type Usuario = {
+  idUsuario: string
+  correo: string
+  nombre?: string
+}
+
 export function UploadDocumentForm() {
   const router = useRouter()
   const { toast } = useToast()
@@ -32,8 +43,10 @@ export function UploadDocumentForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [fileName, setFileName] = useState("")
   const [file, setFile] = useState<File | null>(null)
+  const [usuario, setUsuario] = useState<Usuario | null>(null)
+  const [organizaciones, setOrganizaciones] = useState<Organizacion[]>([])
+  const [loadingOrganizaciones, setLoadingOrganizaciones] = useState(true)
 
-  const [nombreDocumento, setNombreDocumento] = useState("")
   const [tipoDocumento, setTipoDocumento] = useState("")
   const [organizacion, setOrganizacion] = useState("")
   const [descripcion, setDescripcion] = useState("")
@@ -43,6 +56,38 @@ export function UploadDocumentForm() {
   const [auditoriaNombreProceso, setAuditoriaNombreProceso] = useState("")
   const [auditoriaUsuarioCreador, setAuditoriaUsuarioCreador] = useState("")
   const [auditoriaFechaLimite, setAuditoriaFechaLimite] = useState("")
+
+  useEffect(() => {
+    // Obtener usuario en sesión
+    const usuarioData = sessionStorage.getItem("usuario")
+    if (usuarioData) {
+      const parsed = JSON.parse(usuarioData)
+      setUsuario(parsed)
+    } else {
+      toast({
+        title: "Error de sesión",
+        description: "No hay usuario en sesión",
+      })
+      router.push("/iniciar-sesion")
+    }
+
+    // Cargar organizaciones
+    const fetchOrganizaciones = async () => {
+      try {
+        const res = await fetch("/api/organizacion")
+        if (res.ok) {
+          const data = await res.json()
+          setOrganizaciones(Array.isArray(data) ? data : [])
+        }
+      } catch (err) {
+        console.error("Error al cargar organizaciones:", err)
+      } finally {
+        setLoadingOrganizaciones(false)
+      }
+    }
+
+    fetchOrganizaciones()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -72,8 +117,16 @@ export function UploadDocumentForm() {
     setIsLoading(true)
 
     try {
-      // 🔹 OJO: usa aquí el id del usuario logueado cuando tengas auth
-      const idUsuarioPropietario = "061b75be-4f90-419f-9ead-506f0f6dbc30"
+      // Usar el ID del usuario en sesión
+      const idUsuarioPropietario = usuario?.idUsuario
+      
+      if (!idUsuarioPropietario) {
+        toast({
+          title: "Error",
+          description: "No se pudo obtener el ID del usuario",
+        })
+        return
+      }
 
       const formData = new FormData()
       formData.append("file", file)
@@ -84,7 +137,13 @@ export function UploadDocumentForm() {
         "etiquetas",
         [tipoDocumento, organizacion].filter(Boolean).join(", "),
       )
-      formData.append("resumen", descripcion || nombreDocumento)
+      formData.append("resumen", descripcion || "Documento")
+      
+      // Obtener el ID de la organización seleccionada
+      const orgSeleccionada = organizaciones.find(org => org.nombre === organizacion)
+      if (orgSeleccionada) {
+        formData.append("idOrganizacion", orgSeleccionada.idOrganizacion)
+      }
 
       formData.append("esAuditoria", String(esAuditoria))
       if (esAuditoria) {
@@ -209,18 +268,6 @@ export function UploadDocumentForm() {
             </div>
           </div>
 
-          {/* Nombre */}
-          <div className="space-y-2">
-            <Label htmlFor="name">Nombre del Documento</Label>
-            <Input
-              id="name"
-              placeholder="Ej: Contrato de Servicios 2025"
-              value={nombreDocumento}
-              onChange={(e) => setNombreDocumento(e.target.value)}
-              required
-            />
-          </div>
-
           {/* Tipo + Organización */}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
@@ -251,14 +298,16 @@ export function UploadDocumentForm() {
                 required
               >
                 <SelectTrigger id="organization">
-                  <SelectValue placeholder="Seleccionar organización" />
+                  <SelectValue placeholder={loadingOrganizaciones ? "Cargando..." : "Seleccionar organización"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="acme">Acme Corp</SelectItem>
-                  <SelectItem value="finance">Finance Dept</SelectItem>
-                  <SelectItem value="legal">Legal Dept</SelectItem>
-                  <SelectItem value="tech">Tech Dept</SelectItem>
-                  <SelectItem value="hr">HR Dept</SelectItem>
+                  {organizaciones.length > 0 ? (
+                    organizaciones.map((org) => (
+                      <SelectItem key={org.idOrganizacion} value={org.nombre}>
+                        {org.nombre}
+                      </SelectItem>
+                    ))
+                  ) : null}
                 </SelectContent>
               </Select>
             </div>

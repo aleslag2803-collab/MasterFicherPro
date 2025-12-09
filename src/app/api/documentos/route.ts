@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
       version: (formData.get("version") as string) || undefined,
       etiquetas: (formData.get("etiquetas") as string) || undefined,
       resumen: (formData.get("resumen") as string) || undefined,
+      idOrganizacion: (formData.get("idOrganizacion") as string) || undefined,
     }
 
     const result = await postDocumentoController(bodyForService)

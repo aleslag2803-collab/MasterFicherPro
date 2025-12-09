@@ -31,6 +31,7 @@ model Usuarios {
 model Documentos {
   idDocumento          String               @id @default(uuid())
   idUsuarioPropietario String
+  idOrganizacion       String?
   nombreArchivo        String
   tipoArchivo          String
   contenidoArchivo     Bytes?
@@ -43,6 +44,7 @@ model Documentos {
   esAuditoria          Boolean              @default(false)
   esEliminado          Boolean              @default(false)
   usuarioPropietario   Usuarios             @relation(fields: [idUsuarioPropietario], references: [idUsuario])
+  organizacion         Organizacion?        @relation(fields: [idOrganizacion], references: [idOrganizacion])
   historial            HistorialAcciones[]
   permisos             Permisos[]
   procesosAuditoria    ProcesosAuditoria[]
@@ -74,6 +76,7 @@ model Organizacion {
   padre           Organizacion?  @relation("Jerarquia", fields: [padreId], references: [idOrganizacion])
   hijos           Organizacion[] @relation("Jerarquia")
   usuario         Usuarios       @relation(fields: [idUsuario], references: [idUsuario])
+  documentos      Documentos[]
 }
 
 model CuestionarioIA {

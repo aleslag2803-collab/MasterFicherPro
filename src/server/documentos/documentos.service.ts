@@ -2,9 +2,10 @@ import {
   createDocumento,
   findAllDocumentos,
   findDocumentoById,
+  updateDocumento,
   markDocumentoAsEliminado,   // 👈 nuevo import
 } from "./documentos.repository"
-import { Documento, DocumentoCreateInput } from "./documentos.model"
+import { Documento, DocumentoCreateInput, DocumentoUpdateInput } from "./documentos.model"
 
 export async function listarDocumentosService(): Promise<Documento[]> {
   const documentos = await findAllDocumentos()
@@ -58,6 +59,41 @@ export async function crearDocumentoService(body: any): Promise<Documento> {
   }
 
   const documento = await createDocumento(data)
+  return documento
+}
+
+export async function actualizarDocumentoService(
+  idDocumento: string,
+  body: any
+): Promise<Documento> {
+  if (!idDocumento) {
+    throw new Error("idDocumento es obligatorio")
+  }
+
+  // Verificar que el documento exista
+  const documentoExistente = await findDocumentoById(idDocumento)
+  if (!documentoExistente) {
+    throw new Error("Documento no encontrado")
+  }
+
+  // Validar que al menos un campo sea proporcionado
+  if (!body || Object.keys(body).length === 0) {
+    throw new Error("Debe proporcionar al menos un campo para actualizar")
+  }
+
+  const data: DocumentoUpdateInput = {
+    ...(body.nombreArchivo && { nombreArchivo: body.nombreArchivo }),
+    ...(body.version !== undefined && { version: body.version }),
+    ...(body.estado && { estado: body.estado }),
+    ...(body.etiquetas !== undefined && { etiquetas: body.etiquetas }),
+    ...(body.resumen !== undefined && { resumen: body.resumen }),
+  }
+
+  const documento = await updateDocumento(idDocumento, data)
+  if (!documento) {
+    throw new Error("Error al actualizar el documento")
+  }
+
   return documento
 }
 

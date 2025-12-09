@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import {
   deleteDocumentoController,
   getDocumentoPorIdController,
+  putDocumentoController,
 } from "@/src/server/documentos/documentos.controller"
 
 export const runtime = "nodejs"
@@ -42,6 +43,24 @@ export async function GET(
       "Content-Disposition": `inline; filename="${documento.nombreArchivo}"`,
     },
   })
+}
+
+// PUT /api/documentos/[id]
+export async function PUT(
+  req: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{ id: string }>
+  }
+) {
+  const { id } = await params
+  const idDocumento = id
+  const data = await req.json()
+
+  const result = await putDocumentoController(idDocumento, data)
+
+  return NextResponse.json(result.body, { status: result.status })
 }
 
 // DELETE /api/documentos/[id]

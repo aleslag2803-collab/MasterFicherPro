@@ -50,6 +50,30 @@ export async function createDocumento(
 // ❌ Antes: delete físico
 // export async function deleteDocumentoById(idDocumento: string): Promise<boolean> { ... }
 
+// 🔹 Actualizar metadatos de un documento
+export async function updateDocumento(
+  idDocumento: string,
+  data: any
+): Promise<Documento | null> {
+  try {
+    const documento = await prisma.documentos.update({
+      where: { idDocumento },
+      data: {
+        ...(data.nombreArchivo && { nombreArchivo: data.nombreArchivo }),
+        ...(data.version !== undefined && { version: data.version }),
+        ...(data.estado && { estado: data.estado }),
+        ...(data.etiquetas !== undefined && { etiquetas: data.etiquetas }),
+        ...(data.resumen !== undefined && { resumen: data.resumen }),
+      },
+    })
+
+    return documento as unknown as Documento
+  } catch (error) {
+    console.error("Error actualizando documento", error)
+    return null
+  }
+}
+
 // ✅ Ahora: soft delete → esEliminado = true
 export async function markDocumentoAsEliminado(
   idDocumento: string

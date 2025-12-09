@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu"
-import { Download, Eye, MoreVertical, Trash2 } from "lucide-react"
+import { Download, Eye, MoreVertical, Trash2, Edit } from "lucide-react"
 
 // 👇 importamos el dialogo de confirmación y el toast
 import {
@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "../ui/alert-dialog"
 import { useToast } from "@/src/hooks/use-toast"
+import EditDocumentModal from "./editar-documento"
 
 type Documento = {
   idDocumento: string
@@ -33,9 +34,16 @@ type Documento = {
   fechaSubida: string // viene como string de la API (ISO)
   estado: string
   tamanoBytes?: number | null
+  etiquetas?: string | null
+  version?: string | null
+  resumen?: string | null
 }
 
-export function DocumentsTable() {
+interface DocumentsTableProps {
+  searchTerm: string
+}
+
+export function DocumentsTable({ searchTerm }: DocumentsTableProps) {
   const [documents, setDocuments] = useState<Documento[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,6 +52,8 @@ export function DocumentsTable() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [docToDelete, setDocToDelete] = useState<Documento | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [editingDoc, setEditingDoc] = useState<Documento | null>(null)
 
   const { toast } = useToast()
 
@@ -100,6 +110,24 @@ export function DocumentsTable() {
     return estado
   }
 
+  const getOrganizationFromEtiquetas = (etiquetas?: string | null) => {
+    if (!etiquetas) return "-"
+    const partes = etiquetas.split(",").map(e => e.trim())
+    // Asumimos que la segunda etiqueta es la organización (después del tipo)
+    return partes.length > 1 ? partes[1] : "-"
+  }
+
+  // Filtrar documentos por búsqueda
+  const filteredDocuments = documents.filter(doc => {
+    const searchLower = searchTerm.toLowerCase()
+    return (
+      doc.nombreArchivo.toLowerCase().includes(searchLower) ||
+      doc.tipoArchivo.toLowerCase().includes(searchLower) ||
+      getOrganizationFromEtiquetas(doc.etiquetas).toLowerCase().includes(searchLower) ||
+      normalizeStatusLabel(doc.estado).toLowerCase().includes(searchLower)
+    )
+  })
+
   // 👇 función que llama al DELETE /api/documentos/[id]
   const handleConfirmDelete = async () => {
     if (!docToDelete) return
@@ -143,8 +171,59 @@ export function DocumentsTable() {
     }
   }
 
+  const handleEditDoc = (doc: Documento) => {
+    setEditingDoc(doc)
+    setEditModalOpen(true)
+  }
+
+  const handleUpdateDoc = async (id: string, updateData: any) => {
+    try {
+      const res = await fetch(`/api/documentos/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updateData),
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || "Error al actualizar")
+      }
+
+      const updated = await res.json()
+      
+      // Actualizar el documento en la tabla manteniendo las etiquetas
+      setDocuments(prev =>
+        prev.map(d => d.idDocumento === id ? { ...d, ...updated } : d)
+      )
+
+      toast({
+        title: "Documento actualizado",
+        description: "Los cambios se han guardado correctamente.",
+      })
+
+      return true
+    } catch (error: any) {
+      console.error("Error al actualizar:", error)
+      toast({
+        title: "Error al actualizar",
+        description: error.message || "Ocurrió un error al actualizar el documento",
+      })
+      return false
+    }
+  }
+
   return (
     <>
+      <EditDocumentModal
+        open={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false)
+          setEditingDoc(null)
+        }}
+        documento={editingDoc}
+        onUpdate={handleUpdateDoc}
+      />
+
       <div className="rounded-lg border bg-card">
         <Table>
           <TableHeader>
@@ -175,22 +254,22 @@ export function DocumentsTable() {
               </TableRow>
             )}
 
-            {!isLoading && !error && documents.length === 0 && (
+            {!isLoading && !error && filteredDocuments.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-6">
-                  No hay documentos registrados.
+                  {documents.length === 0 ? "No hay documentos registrados." : "No se encontraron documentos con ese término de búsqueda."}
                 </TableCell>
               </TableRow>
             )}
 
             {!isLoading &&
               !error &&
-              documents.map((doc) => (
+              filteredDocuments.map((doc) => (
                 <TableRow key={doc.idDocumento}>
                   <TableCell className="font-medium">{doc.nombreArchivo}</TableCell>
                   <TableCell>{doc.tipoArchivo}</TableCell>
 
-                  <TableCell>-</TableCell>
+                  <TableCell>{getOrganizationFromEtiquetas(doc.etiquetas)}</TableCell>
 
                   <TableCell>{formatDate(doc.fechaSubida)}</TableCell>
                   <TableCell>
@@ -228,6 +307,13 @@ export function DocumentsTable() {
                             Descargar / Ver
                           </DropdownMenuItem>
                         </a>
+
+                        <DropdownMenuItem
+                          onSelect={() => handleEditDoc(doc)}
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar
+                        </DropdownMenuItem>
 
                         {/* 👇 aquí abrimos el diálogo de confirmación */}
                         <DropdownMenuItem

@@ -15,6 +15,8 @@ import {
   Trash2,
   User,
 } from "lucide-react"
+import EditDocumentModal from "./editar-documento"
+import { useToast } from "@/src/hooks/use-toast"
 
 interface DocumentDetailsProps {
   documentId: string
@@ -31,12 +33,24 @@ type Documento = {
   estado: string
   etiquetas: string | null
   resumen: string | null
+  idOrganizacion?: string
+  usuario?: {
+    nombre: string
+    correo: string
+  }
 }
 
 export function DocumentDetails({ documentId }: DocumentDetailsProps) {
   const [doc, setDoc] = useState<Documento | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [usuario, setUsuario] = useState<any>(null)
+  const [loadingUsuario, setLoadingUsuario] = useState(false)
+  const [organizacion, setOrganizacion] = useState<any>(null)
+  const [loadingOrganizacion, setLoadingOrganizacion] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     const load = async () => {
@@ -50,6 +64,38 @@ export function DocumentDetails({ documentId }: DocumentDetailsProps) {
 
         const data = (await res.json()) as Documento
         setDoc(data)
+
+        // Cargar información del usuario
+        if (data.idUsuarioPropietario) {
+          setLoadingUsuario(true)
+          try {
+            const userRes = await fetch(`/api/usuarios/${data.idUsuarioPropietario}`)
+            if (userRes.ok) {
+              const userData = await userRes.json()
+              setUsuario(userData)
+            }
+          } catch (err) {
+            console.error("Error al cargar usuario:", err)
+          } finally {
+            setLoadingUsuario(false)
+          }
+        }
+
+        // Cargar información de la organización desde el idOrganizacion
+        if (data.idOrganizacion) {
+          setLoadingOrganizacion(true)
+          try {
+            const orgRes = await fetch(`/api/organizacion/${data.idOrganizacion}`)
+            if (orgRes.ok) {
+              const orgData = await orgRes.json()
+              setOrganizacion(orgData)
+            }
+          } catch (err) {
+            console.error("Error al cargar organización:", err)
+          } finally {
+            setLoadingOrganizacion(false)
+          }
+        }
       } catch (err: any) {
         console.error("Error cargando detalles de documento", err)
         setError(err?.message ?? "No se pudo cargar el documento")
@@ -131,8 +177,82 @@ export function DocumentDetails({ documentId }: DocumentDetailsProps) {
     )
   }
 
+  const handleUpdate = async (id: string, updateData: any) => {
+    try {
+      const res = await fetch(`/api/documentos/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updateData),
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || "Error al actualizar")
+      }
+
+      const updated = await res.json()
+      setDoc(updated)
+      
+      toast({
+        title: "Documento actualizado",
+        description: "Los cambios se han guardado correctamente.",
+      })
+      
+      return true
+    } catch (error: any) {
+      console.error("Error al actualizar:", error)
+      toast({
+        title: "Error al actualizar",
+        description: error.message || "Ocurrió un error al actualizar el documento",
+      })
+      return false
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este documento?")) return
+
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/documentos/${doc.idDocumento}`, {
+        method: "DELETE",
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || "Error al eliminar el documento")
+      }
+
+      toast({
+        title: "Documento eliminado",
+        description: "El documento se ha marcado como eliminado correctamente.",
+      })
+
+      // Redirigir a documentos
+      setTimeout(() => {
+        window.location.href = "/documentos"
+      }, 500)
+    } catch (error: any) {
+      console.error("Error al eliminar:", error)
+      toast({
+        title: "Error al eliminar",
+        description: error.message || "No se pudo eliminar el documento",
+      })
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
-    <div className="space-y-4">
+    <>
+      <EditDocumentModal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        documento={doc}
+        onUpdate={handleUpdate}
+      />
+
+      <div className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle>Información</CardTitle>
@@ -148,8 +268,9 @@ export function DocumentDetails({ documentId }: DocumentDetailsProps) {
             <div className="flex items-center gap-2 text-sm">
               <Building className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">Organización:</span>
-              {/* Aún no está ligada en el modelo; dejamos placeholder */}
-              <span className="font-medium">-</span>
+              <span className="font-medium">
+                {loadingOrganizacion ? "Cargando..." : organizacion?.nombre || "Desconocida"}
+              </span>
             </div>
 
             <div className="flex items-center gap-2 text-sm">
@@ -160,8 +281,10 @@ export function DocumentDetails({ documentId }: DocumentDetailsProps) {
 
             <div className="flex items-center gap-2 text-sm">
               <User className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Subido por (id usuario):</span>
-              <span className="font-mono text-xs">{doc.idUsuarioPropietario}</span>
+              <span className="text-muted-foreground">Subido por:</span>
+              <span className="font-medium">
+                {loadingUsuario ? "Cargando..." : usuario?.nombre || "Desconocido"}
+              </span>
             </div>
           </div>
 
@@ -236,19 +359,26 @@ export function DocumentDetails({ documentId }: DocumentDetailsProps) {
             <Share2 className="mr-2 h-4 w-4" />
             Compartir
           </Button>
-          <Button variant="outline" className="w-full justify-start bg-transparent">
+          <Button
+            variant="outline"
+            className="w-full justify-start bg-transparent"
+            onClick={() => setEditModalOpen(true)}
+          >
             <Edit className="mr-2 h-4 w-4" />
             Editar
           </Button>
           <Button
             variant="outline"
             className="w-full justify-start bg-transparent text-destructive hover:text-destructive"
+            onClick={handleDelete}
+            disabled={deleting}
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            Eliminar
+            {deleting ? "Eliminando..." : "Eliminar"}
           </Button>
         </CardContent>
       </Card>
     </div>
+    </>
   )
 }

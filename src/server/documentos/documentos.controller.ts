@@ -2,8 +2,9 @@ import {
   listarDocumentosService,
   crearDocumentoService,
   obtenerDocumentoPorIdService,
+  actualizarDocumentoService,
+  eliminarDocumentoService,
 } from "./documentos.service"
-import { eliminarDocumentoService } from "./documentos.service"
 
 export async function getDocumentosController() {
   const documentos = await listarDocumentosService()
@@ -60,6 +61,23 @@ export async function postDocumentoController(body: any) {
       },
     }
   } 
+}
+
+export async function putDocumentoController(idDocumento: string, body: any) {
+  try {
+    const documento = await actualizarDocumentoService(idDocumento, body)
+    return {
+      status: 200,
+      body: documento,
+    }
+  } catch (error: any) {
+    return {
+      status: 400,
+      body: {
+        error: error?.message ?? "Error al actualizar documento",
+      },
+    }
+  }
 }
 
 export async function deleteDocumentoController(idDocumento: string) {

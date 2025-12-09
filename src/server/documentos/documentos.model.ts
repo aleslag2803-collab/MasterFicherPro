@@ -27,3 +27,11 @@ export interface DocumentoCreateInput {
   etiquetas?: string
   resumen?: string
 }
+
+export interface DocumentoUpdateInput {
+  nombreArchivo?: string
+  version?: string
+  estado?: string
+  etiquetas?: string
+  resumen?: string
+}
