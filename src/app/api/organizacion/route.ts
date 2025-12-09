@@ -1,52 +1,17 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/src/lib/prisma";
+import { NextRequest, NextResponse } from "next/server"
+import {
+  getOrganizacionesController,
+  postOrganizacionController,
+} from "@/src/server/organizaciones/organizaciones.controller"
 
 export async function GET() {
-  const carpetas = await prisma.organizacion.findMany({
-    include: { usuario: true, hijos: true, padre: true },
-  });
-  return NextResponse.json(carpetas);
+  const result = await getOrganizacionesController()
+  return NextResponse.json(result.body, { status: result.status })
 }
 
-export async function POST(request: Request) {
-  const body = await request.json();
-
-  const nuevo = await prisma.organizacion.create({
-    data: {
-      idUsuario: body.idUsuario,
-      nombre: body.nombre ?? null,
-      descripcion: body.descripcion ?? null,
-      emailContacto: body.emailContacto ?? null,
-      telefono: body.telefono ?? null,
-      direccion: body.direccion ?? null,
-
-      // campos obligatorios
-      nombreCarpeta: body.nombreCarpeta,
-      nivelJerarquico: body.nivelJerarquico,
-      padreId: body.padreId,
-    },
-  });
-
-  return NextResponse.json(nuevo);
+export async function POST(req: NextRequest) {
+  const data = await req.json()
+  const result = await postOrganizacionController(data)
+  return NextResponse.json(result.body, { status: result.status })
 }
 
-export async function PUT(request: Request) {
-  const body = await request.json();
-  const actualizado = await prisma.organizacion.update({
-    where: { idOrganizacion: body.idOrganizacion },
-    data: {
-      nombreCarpeta: body.nombreCarpeta,
-      nivelJerarquico: body.nivelJerarquico,
-      padreId: body.padreId ?? null,
-    },
-  });
-  return NextResponse.json(actualizado);
-}
-
-export async function DELETE(request: Request) {
-  const body = await request.json();
-  await prisma.organizacion.delete({
-    where: { idOrganizacion: body.idOrganizacion },
-  });
-  return NextResponse.json({ message: "Carpeta eliminada" });
-}

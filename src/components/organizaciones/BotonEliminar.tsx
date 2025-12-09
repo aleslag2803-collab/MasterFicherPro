@@ -1,29 +1,30 @@
-"use client";
+"use client"
 
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { toast } from "sonner"
 
 export function useEliminarOrganizacion() {
-  const eliminar = async (idOrganizacion: number) => {
-    const confirmar = confirm("¿Seguro que deseas eliminar esta organización?");
-    if (!confirmar) return false;
+  const eliminar = async (idOrganizacion: string) => {
+    const confirmar = confirm("¿Seguro que deseas eliminar esta organización?")
+    if (!confirmar) return false
 
     try {
-      const res = await fetch("/api/organizacion", {
+      const res = await fetch(`/api/organizacion/${idOrganizacion}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idOrganizacion }),
-      });
+      })
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || "Error al eliminar")
+      }
 
-      toast.success("Organización eliminada");
-      return true; // <= importante
-    } catch {
-      toast.error("Error al eliminar");
-      return false;
+      toast.success("Organización eliminada correctamente")
+      return true
+    } catch (error: any) {
+      toast.error(error.message || "Error al eliminar la organización")
+      return false
     }
-  };
+  }
 
-  return eliminar;
+  return eliminar
 }
