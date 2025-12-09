@@ -4,8 +4,10 @@ import type React from "react";
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function CrearCuenta() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     nombre: "",
     email: "",
@@ -56,9 +58,18 @@ export default function CrearCuenta() {
     // ✔ Todo bien: mostrar mensaje de éxito
     setMensaje("✅ Cuenta creada correctamente, redirigiendo...");
 
-    // ✔ Esperar 2 segundos y luego redirigir
-    setTimeout(() => {
-      window.location.href = "/iniciar-sesion";
+    // ✔ Guardar usuario en sessionStorage y redirigir al dashboard
+    setTimeout(async () => {
+      sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
+
+      // Guardar cookie para el middleware
+      await fetch("/api/auth/set-cookie", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario: data.usuario }),
+      });
+
+      router.push("/dashboard");
     }, 2000);
 
     setLoading(false);

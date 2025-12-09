@@ -14,7 +14,9 @@ model Usuarios {
   passwordHash               String
   rol                        String
   estado                     Boolean                @default(true)
+  esEliminado                Boolean                @default(false)
   fechaRegistro              DateTime               @default(now())
+  fechaEliminacion           DateTime?
   comentariosAuditoria       ComentariosAuditoria[]
   cuestionarios              CuestionarioIA[]
   decisionesAuditoria        DecisionesAuditoria[]

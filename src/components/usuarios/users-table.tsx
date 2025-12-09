@@ -1,8 +1,10 @@
-"use client"
-
 import { useState } from "react"
-import { Mail, MoreVertical, Trash2, UserCog, CheckCircle, XCircle } from "lucide-react"
+import { Mail, MoreVertical, Trash2, UserCog, CheckCircle, XCircle, Edit2 } from "lucide-react"
 import { Button } from "../ui/button"
+import EditUserModal from "./editar-usuario"
+
+// 👇 Importa tu tipo real de usuario
+import { Usuario } from "@/src/server/usuarios/usuarios.model"
 
 interface User {
   idUsuario: string
@@ -10,19 +12,24 @@ interface User {
   name: string
   email: string
   role: string
-  status: string
+  status: string   // "Activo" | "Inactivo"
   lastAccess: string
 }
 
 interface UsersTableProps {
   users: User[]
+  onUpdate?: (id: string, data: any) => Promise<boolean>
 }
 
-export default function UsersTable({ users: initialUsers }: UsersTableProps) {
+export default function UsersTable({ users: initialUsers, onUpdate }: UsersTableProps) {
   const [users, setUsers] = useState<User[]>(initialUsers)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [showStatusSubmenu, setShowStatusSubmenu] = useState<string | null>(null)
+
+  // 👇 ahora editingUser es del tipo Usuario, no User
+  const [editingUser, setEditingUser] = useState<Usuario | null>(null)
+  const [editModalOpen, setEditModalOpen] = useState(false)
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -38,28 +45,20 @@ export default function UsersTable({ users: initialUsers }: UsersTableProps) {
   }
 
   const getStatusColor = (status: string) => {
-    if (status === "Activo") {
-      return "bg-green-100 text-green-800"
-    } else if (status === "Inactivo") {
-      return "bg-red-100 text-red-800"
-    }
+    if (status === "Activo") return "bg-green-100 text-green-800"
+    if (status === "Inactivo") return "bg-red-100 text-red-800"
     return "bg-gray-100 text-gray-800"
   }
 
-  // Función para eliminar usuario
   const handleDeleteUser = async (userId: string, userName: string) => {
-    if (!confirm(`¿Estás seguro de eliminar al usuario "${userName}"?`)) {
-      return
-    }
+    if (!confirm(`¿Estás seguro de eliminar al usuario "${userName}"?`)) return
 
     setLoadingId(userId)
     setOpenMenuId(null)
     setShowStatusSubmenu(null)
     
     try {
-      const response = await fetch(`/api/usuarios/${userId}`, {
-        method: "DELETE",
-      })
+      const response = await fetch(`/api/usuarios/${userId}`, { method: "DELETE" })
 
       if (response.ok) {
         setUsers(users.filter(user => user.idUsuario !== userId))
@@ -75,7 +74,6 @@ export default function UsersTable({ users: initialUsers }: UsersTableProps) {
     }
   }
 
-  // Función para cambiar estado del usuario
   const handleStatusChange = async (userId: string, newStatus: "Activo" | "Inactivo") => {
     setLoadingId(userId)
     setOpenMenuId(null)
@@ -86,11 +84,9 @@ export default function UsersTable({ users: initialUsers }: UsersTableProps) {
       if (!user) return
 
       const response = await fetch(`/api/usuarios/${userId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: newStatus }),
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: newStatus === "Activo" }),
       })
 
       if (response.ok) {
@@ -111,144 +107,231 @@ export default function UsersTable({ users: initialUsers }: UsersTableProps) {
     }
   }
 
-  return (
-    <div className="border border-border rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-border bg-card">
-              <th className="text-left px-6 py-4 font-semibold text-foreground">Usuario</th>
-              <th className="text-left px-6 py-4 font-semibold text-foreground">Email</th>
-              <th className="text-left px-6 py-4 font-semibold text-foreground">Rol</th>
-              <th className="text-left px-6 py-4 font-semibold text-foreground">Estado</th>
-              <th className="text-left px-6 py-4 font-semibold text-foreground">Último acceso</th>
-              <th className="text-center px-6 py-4 font-semibold text-foreground">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user, index) => (
-              <tr 
-                key={user.idUsuario || index} 
-                className={index !== users.length - 1 ? "border-b border-border" : ""}
-              >
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                      {user.initials}
-                    </div>
-                    <span className="font-medium text-foreground">{user.name}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Mail className="w-4 h-4" />
-                    <span className="text-sm">{user.email}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRoleColor(user.role)}`}>
-                    {user.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(user.status)}`}>
-                    {user.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-foreground">{user.lastAccess}</td>
-                <td className="px-6 py-4 text-center">
-                  <div className="relative inline-block">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setOpenMenuId(openMenuId === user.idUsuario ? null : user.idUsuario)
-                        setShowStatusSubmenu(null)
-                      }}
-                      disabled={loadingId === user.idUsuario}
-                    >
-                      {loadingId === user.idUsuario ? (
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                      ) : (
-                        <MoreVertical className="w-4 h-4" />
-                      )}
-                    </Button>
+  // 👇 Aquí hacemos el mapeo User -> Usuario para el modal
+  const handleEditUser = (user: User) => {
+    const usuarioParaModal: Usuario = {
+      idUsuario: user.idUsuario,
+      nombre: user.name,
+      correo: user.email,
+      rol: user.role,
+      estado: user.status === "Activo",
 
-                    {/* Menú desplegable principal */}
-                    {openMenuId === user.idUsuario && (
-                      <div className="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-20">
-                        {/* Opción Cambiar Estado con submenú */}
-                        <div className="relative">
+      // Rellena/elimina estos campos según cómo tengas tu interface Usuario
+      passwordHash: "",
+      fechaRegistro: new Date(),
+      esEliminado: false,
+      fechaEliminacion: null,
+    }
+
+    setEditingUser(usuarioParaModal)
+    setEditModalOpen(true)
+    setOpenMenuId(null)
+  }
+
+  const handleUpdateUser = async (userId: string, data: any) => {
+    setLoadingId(userId)
+
+    try {
+      const response = await fetch(`/api/usuarios/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+
+      if (response.ok) {
+        const updatedUser = await response.json()
+
+        setUsers(
+          users.map((u) =>
+            u.idUsuario === userId
+              ? {
+                  ...u,
+                  name: updatedUser.nombre,
+                  email: updatedUser.correo,
+                  role: updatedUser.rol,
+                  status: updatedUser.estado ? "Activo" : "Inactivo",
+                }
+              : u,
+          ),
+        )
+        alert("Usuario actualizado correctamente")
+        return true
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error || "No se pudo actualizar"}`)
+        return false
+      }
+    } catch (error) {
+      console.error("Error al actualizar usuario:", error)
+      alert("Error al actualizar el usuario")
+      return false
+    } finally {
+      setLoadingId(null)
+    }
+  }
+
+  return (
+    <>
+      {/* Solo renderizamos el modal si tenemos un usuario mapeado */}
+      {editingUser && (
+        <EditUserModal
+          open={editModalOpen}
+          onClose={() => {
+            setEditModalOpen(false)
+            setEditingUser(null)
+          }}
+          usuario={editingUser}
+          onUpdate={handleUpdateUser}
+        />
+      )}
+      
+      <div className="border border-border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border bg-card">
+                <th className="text-left px-6 py-4 font-semibold text-foreground">Usuario</th>
+                <th className="text-left px-6 py-4 font-semibold text-foreground">Email</th>
+                <th className="text-left px-6 py-4 font-semibold text-foreground">Rol</th>
+                <th className="text-left px-6 py-4 font-semibold text-foreground">Estado</th>
+                <th className="text-left px-6 py-4 font-semibold text-foreground">Último acceso</th>
+                <th className="text-center px-6 py-4 font-semibold text-foreground">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user, index) => (
+                <tr 
+                  key={user.idUsuario || index} 
+                  className={index !== users.length - 1 ? "border-b border-border" : ""}
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                        {user.initials}
+                      </div>
+                      <span className="font-medium text-foreground">{user.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Mail className="w-4 h-4" />
+                      <span className="text-sm">{user.email}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRoleColor(user.role)}`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(user.status)}`}>
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-foreground">{user.lastAccess}</td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="relative inline-block">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setOpenMenuId(openMenuId === user.idUsuario ? null : user.idUsuario)
+                          setShowStatusSubmenu(null)
+                        }}
+                        disabled={loadingId === user.idUsuario}
+                      >
+                        {loadingId === user.idUsuario ? (
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        ) : (
+                          <MoreVertical className="w-4 h-4" />
+                        )}
+                      </Button>
+
+                      {/* Menú principal */}
+                      {openMenuId === user.idUsuario && (
+                        <div className="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-20">
+                          {/* Editar */}
                           <button
-                            onClick={() => setShowStatusSubmenu(showStatusSubmenu === user.idUsuario ? null : user.idUsuario)}
-                            className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center justify-between border-b border-gray-100"
+                            onClick={() => handleEditUser(user)}
+                            className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center gap-2 border-b border-gray-100"
                             disabled={loadingId === user.idUsuario}
                           >
-                            <div className="flex items-center gap-2">
-                              <UserCog className="h-4 w-4" />
-                              <span>Cambiar estado</span>
-                            </div>
-                            <span className="text-gray-400">▶</span>
+                            <Edit2 className="h-4 w-4 text-blue-500" />
+                            <span>Editar usuario</span>
                           </button>
 
-                          {/* Submenú de estados */}
-                          {showStatusSubmenu === user.idUsuario && (
-                            <div className="absolute left-full top-0 ml-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg">
-                              <button
-                                onClick={() => handleStatusChange(user.idUsuario, "Activo")}
-                                className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center gap-2 border-b border-gray-100"
-                                disabled={loadingId === user.idUsuario}
-                              >
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                                <span>Activar usuario</span>
-                                {user.status === "Activo" && (
-                                  <span className="ml-auto text-xs text-green-600">✓ Actual</span>
-                                )}
-                              </button>
-                              <button
-                                onClick={() => handleStatusChange(user.idUsuario, "Inactivo")}
-                                className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center gap-2"
-                                disabled={loadingId === user.idUsuario}
-                              >
-                                <XCircle className="h-4 w-4 text-red-500" />
-                                <span>Desactivar usuario</span>
-                                {user.status === "Inactivo" && (
-                                  <span className="ml-auto text-xs text-red-600">✓ Actual</span>
-                                )}
-                              </button>
-                            </div>
-                          )}
+                          {/* Cambiar estado */}
+                          <div className="relative">
+                            <button
+                              onClick={() => setShowStatusSubmenu(showStatusSubmenu === user.idUsuario ? null : user.idUsuario)}
+                              className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center justify-between border-b border-gray-100"
+                              disabled={loadingId === user.idUsuario}
+                            >
+                              <div className="flex items-center gap-2">
+                                <UserCog className="h-4 w-4" />
+                                <span>Cambiar estado</span>
+                              </div>
+                              <span className="text-gray-400">▶</span>
+                            </button>
+
+                            {showStatusSubmenu === user.idUsuario && (
+                              <div className="absolute left-full top-0 ml-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg">
+                                <button
+                                  onClick={() => handleStatusChange(user.idUsuario, "Activo")}
+                                  className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center gap-2 border-b border-gray-100"
+                                  disabled={loadingId === user.idUsuario}
+                                >
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                  <span>Activar usuario</span>
+                                  {user.status === "Activo" && (
+                                    <span className="ml-auto text-xs text-green-600">✓ Actual</span>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleStatusChange(user.idUsuario, "Inactivo")}
+                                  className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center gap-2"
+                                  disabled={loadingId === user.idUsuario}
+                                >
+                                  <XCircle className="h-4 w-4 text-red-500" />
+                                  <span>Desactivar usuario</span>
+                                  {user.status === "Inactivo" && (
+                                    <span className="ml-auto text-xs text-red-600">✓ Actual</span>
+                                  )}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Eliminar */}
+                          <button
+                            onClick={() => handleDeleteUser(user.idUsuario, user.name)}
+                            className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            disabled={loadingId === user.idUsuario}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span>Eliminar usuario</span>
+                          </button>
                         </div>
-                        
-                        {/* Opción Eliminar */}
-                        <button
-                          onClick={() => handleDeleteUser(user.idUsuario, user.name)}
-                          className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                          disabled={loadingId === user.idUsuario}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span>Eliminar usuario</span>
-                        </button>
-                      </div>
+                      )}
+                    </div>
+
+                    {/* Overlay para cerrar al hacer clic fuera */}
+                    {openMenuId === user.idUsuario && (
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => {
+                          setOpenMenuId(null)
+                          setShowStatusSubmenu(null)
+                        }}
+                      />
                     )}
-                  </div>
-                  
-                  {/* Overlay para cerrar menú al hacer clic fuera */}
-                  {openMenuId === user.idUsuario && (
-                    <div 
-                      className="fixed inset-0 z-10" 
-                      onClick={() => {
-                        setOpenMenuId(null)
-                        setShowStatusSubmenu(null)
-                      }}
-                    />
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

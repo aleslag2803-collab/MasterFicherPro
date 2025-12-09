@@ -1,35 +1,55 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "../ui/dialog"
 
-interface CreateUserModalProps {
-  open: boolean
-  onClose: () => void
-  onCreate: (user: any) => void
+interface Usuario {
+  idUsuario: string
+  nombre: string
+  correo: string
+  rol: string
+  estado: boolean
 }
 
-export default function CreateUserModal({ open, onClose, onCreate }: CreateUserModalProps) {
+interface EditUserModalProps {
+  open: boolean
+  onClose: () => void
+  usuario: Usuario 
+  onUpdate: (id: string, data: any) => Promise<boolean>
+}
+
+export default function EditUserModal({ open, onClose, usuario, onUpdate }: EditUserModalProps) {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [role, setRole] = useState("usuario")
   const [active, setActive] = useState("si")
+  const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    if (usuario && open) {
+      setName(usuario.nombre)
+      setEmail(usuario.correo)
+      setRole(usuario.rol || "usuario")
+      setActive(usuario.estado ? "si" : "no")
+      setPassword("")
+      setError("")
+    }
+  }, [usuario, open])
 
   const handleSubmit = async () => {
     setError("")
 
-    if (!name || !email || !password) {
+    if (!name || !email) {
       setError("Todos los campos son obligatorios")
       return
     }
 
-    if (password.length < 6) {
+    if (password && password.length < 6) {
       setError("La contraseña debe tener al menos 6 caracteres")
       return
     }
@@ -37,24 +57,24 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
     setLoading(true)
 
     try {
-      const success = await onCreate({
-        name,
-        email,
-        passwordHash: password,
-        role: role === "admin" ? "admin" : "usuario",
-        active: active === "si",
-      })
+      const updateData: any = {
+        nombre: name,
+        correo: email,
+        rol: role,
+        estado: active === "si",
+      }
+
+      if (password) {
+        updateData.passwordHash = password
+      }
+
+      const success = await onUpdate(usuario!.idUsuario, updateData)
 
       if (success) {
-        setName("")
-        setEmail("")
-        setPassword("")
-        setRole("usuario")
-        setActive("si")
         onClose()
       }
     } catch (err: any) {
-      setError(err.message || "Error al crear el usuario")
+      setError(err.message || "Error al actualizar el usuario")
     } finally {
       setLoading(false)
     }
@@ -64,17 +84,13 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Crear nuevo usuario</DialogTitle>
+          <DialogTitle>Editar usuario</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
             <Label>Nombre</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Juan Perez"
-            />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Juan Perez" />
           </div>
 
           <div>
@@ -88,7 +104,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
           </div>
 
           <div>
-            <Label>Contraseña</Label>
+            <Label>Contraseña (dejar en blanco para no cambiar)</Label>
             <Input
               type="password"
               value={password}
@@ -99,11 +115,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
 
           <div>
             <Label>Rol</Label>
-            <select
-              className="border rounded-md p-2 w-full"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            >
+            <select className="border rounded-md p-2 w-full" value={role} onChange={(e) => setRole(e.target.value)}>
               <option value="admin">Administrador</option>
               <option value="usuario">Usuario</option>
             </select>
@@ -111,11 +123,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
 
           <div>
             <Label>Estado</Label>
-            <select
-              className="border rounded-md p-2 w-full"
-              value={active}
-              onChange={(e) => setActive(e.target.value)}
-            >
+            <select className="border rounded-md p-2 w-full" value={active} onChange={(e) => setActive(e.target.value)}>
               <option value="si">Activo</option>
               <option value="no">Inactivo</option>
             </select>
@@ -129,7 +137,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
             Cancelar
           </Button>
           <Button className="bg-black text-white" onClick={handleSubmit} disabled={loading}>
-            {loading ? "Creando..." : "Crear usuario"}
+            {loading ? "Actualizando..." : "Actualizar usuario"}
           </Button>
         </DialogFooter>
       </DialogContent>

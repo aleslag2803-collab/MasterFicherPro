@@ -7,8 +7,11 @@ export interface Usuario {
   passwordHash: string
   rol: string
   estado: boolean
+  esEliminado: boolean
   fechaRegistro: Date
+  fechaEliminacion: Date | null
 }
+
 
 export interface UsuarioCreateInput {
   nombre: string
@@ -16,4 +19,19 @@ export interface UsuarioCreateInput {
   passwordHash: string
   rol: string
   estado?: boolean
+
+  // opcional, casi nunca lo mandarás desde el front
+  esEliminado?: boolean
+  fechaEliminacion?: Date | null
+}
+
+export interface UsuarioUpdateInput {
+  nombre?: string
+  correo?: string
+  passwordHash?: string
+  rol?: string
+  estado?: boolean
+
+  esEliminado?: boolean
+  fechaEliminacion?: Date | null
 }

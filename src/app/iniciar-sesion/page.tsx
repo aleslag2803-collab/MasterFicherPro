@@ -35,6 +35,13 @@ export default function LoginPage() {
     // Guardar usuario en sessionStorage (autenticación básica)
     sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
 
+    // Guardar cookie para el middleware
+    await fetch("/api/auth/set-cookie", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usuario: data.usuario }),
+    });
+
     // Redirigir al dashboard
     router.push("/dashboard");
   }
