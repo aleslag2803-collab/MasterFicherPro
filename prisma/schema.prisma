@@ -60,6 +60,11 @@ model Permisos {
 model Organizacion {
   idOrganizacion  String         @id @default(uuid())
   idUsuario       String
+  nombre          String
+  descripcion     String?
+  emailContacto   String?
+  telefono        String?
+  direccion       String?
   nombreCarpeta   String
   nivelJerarquico Int
   padreId         String?

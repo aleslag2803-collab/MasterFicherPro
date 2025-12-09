@@ -1,9 +1,7 @@
-
-import { NewOrganizationForm } from "@/src/components/organizaciones/new-organization-form"
-import { Button } from "@/src/components/ui/button"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
-
+import { NewOrganizationForm } from "@/src/components/organizaciones/new-organization-form";
+import { Button } from "@/src/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function NewOrganizationPage() {
   return (
@@ -15,11 +13,15 @@ export default function NewOrganizationPage() {
           </Button>
         </Link>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-foreground">Nueva Organización</h2>
-          <p className="text-muted-foreground">Crear una nueva organización en el sistema</p>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">
+            Nueva Organización
+          </h2>
+          <p className="text-muted-foreground">
+            Crear una nueva organización en el sistema
+          </p>
         </div>
       </div>
       <NewOrganizationForm />
     </div>
-  )
+  );
 }

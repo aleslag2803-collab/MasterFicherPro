@@ -1,28 +1,37 @@
-import { NextResponse } from "next/server"
-import { prisma } from "@/src/lib/prisma"
+import { NextResponse } from "next/server";
+import { prisma } from "@/src/lib/prisma";
 
 export async function GET() {
   const carpetas = await prisma.organizacion.findMany({
     include: { usuario: true, hijos: true, padre: true },
-  })
-  return NextResponse.json(carpetas)
+  });
+  return NextResponse.json(carpetas);
 }
 
 export async function POST(request: Request) {
-  const body = await request.json()
+  const body = await request.json();
+
   const nuevo = await prisma.organizacion.create({
     data: {
       idUsuario: body.idUsuario,
+      nombre: body.nombre ?? null,
+      descripcion: body.descripcion ?? null,
+      emailContacto: body.emailContacto ?? null,
+      telefono: body.telefono ?? null,
+      direccion: body.direccion ?? null,
+
+      // campos obligatorios
       nombreCarpeta: body.nombreCarpeta,
       nivelJerarquico: body.nivelJerarquico,
-      padreId: body.padreId ?? null,
+      padreId: body.padreId,
     },
-  })
-  return NextResponse.json(nuevo)
+  });
+
+  return NextResponse.json(nuevo);
 }
 
 export async function PUT(request: Request) {
-  const body = await request.json()
+  const body = await request.json();
   const actualizado = await prisma.organizacion.update({
     where: { idOrganizacion: body.idOrganizacion },
     data: {
@@ -30,12 +39,14 @@ export async function PUT(request: Request) {
       nivelJerarquico: body.nivelJerarquico,
       padreId: body.padreId ?? null,
     },
-  })
-  return NextResponse.json(actualizado)
+  });
+  return NextResponse.json(actualizado);
 }
 
 export async function DELETE(request: Request) {
-  const body = await request.json()
-  await prisma.organizacion.delete({ where: { idOrganizacion: body.idOrganizacion } })
-  return NextResponse.json({ message: "Carpeta eliminada" })
+  const body = await request.json();
+  await prisma.organizacion.delete({
+    where: { idOrganizacion: body.idOrganizacion },
+  });
+  return NextResponse.json({ message: "Carpeta eliminada" });
 }
