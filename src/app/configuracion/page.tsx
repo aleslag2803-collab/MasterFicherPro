@@ -37,8 +37,8 @@ export default function SettingsForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="systemName">Nombre del Sistema</Label>
-              <Input id="systemName" defaultValue="DocManager" />
+              <Label htmlFor="systemName">Nombre del Sistema</Label> 
+              <p>MasterPollas</p>
             </div>
 
             <div className="space-y-2">
@@ -50,7 +50,7 @@ export default function SettingsForm() {
                 <SelectContent>
                   <SelectItem value="es">Español</SelectItem>
                   <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="pt">Português</SelectItem>
+                  
                 </SelectContent>
               </Select>
             </div>

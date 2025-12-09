@@ -1,7 +1,8 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Mail, MoreVertical, Trash2, UserCog, CheckCircle, XCircle, Edit2 } from "lucide-react"
 import { Button } from "../ui/button"
 import EditUserModal from "./editar-usuario"
+import { useToast } from "@/src/hooks/use-toast"
 
 // 👇 Importa tu tipo real de usuario
 import { Usuario } from "@/src/server/usuarios/usuarios.model"
@@ -23,6 +24,7 @@ interface UsersTableProps {
 
 export default function UsersTable({ users: initialUsers, onUpdate }: UsersTableProps) {
   const [users, setUsers] = useState<User[]>(initialUsers)
+  const { toast } = useToast()
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [showStatusSubmenu, setShowStatusSubmenu] = useState<string | null>(null)
@@ -62,13 +64,13 @@ export default function UsersTable({ users: initialUsers, onUpdate }: UsersTable
 
       if (response.ok) {
         setUsers(users.filter(user => user.idUsuario !== userId))
-        alert(`Usuario "${userName}" eliminado correctamente`)
+        toast({ title: "Usuario eliminado", description: `Usuario "${userName}" eliminado correctamente` })
       } else {
-        alert("Error al eliminar el usuario")
+        toast({ title: "Error al eliminar", description: "No se pudo eliminar el usuario." })
       }
     } catch (error) {
       console.error("Error al eliminar usuario:", error)
-      alert("Error al eliminar el usuario")
+      toast({ title: "Error de conexión", description: "No se pudo conectar al servidor." })
     } finally {
       setLoadingId(null)
     }
@@ -95,13 +97,13 @@ export default function UsersTable({ users: initialUsers, onUpdate }: UsersTable
             ? { ...user, status: newStatus } 
             : user
         ))
-        alert(`Usuario ${newStatus === "Activo" ? "activado" : "desactivado"} correctamente`)
+        toast({ title: "Estado actualizado", description: `Usuario ${newStatus === "Activo" ? "activado" : "desactivado"} correctamente` })
       } else {
-        alert("Error al cambiar el estado")
+        toast({ title: "Error al cambiar estado", description: "No se pudo cambiar el estado del usuario." })
       }
     } catch (error) {
       console.error("Error al cambiar estado:", error)
-      alert("Error al cambiar el estado")
+      toast({ title: "Error de conexión", description: "No se pudo conectar al servidor." })
     } finally {
       setLoadingId(null)
     }
@@ -154,21 +156,59 @@ export default function UsersTable({ users: initialUsers, onUpdate }: UsersTable
               : u,
           ),
         )
-        alert("Usuario actualizado correctamente")
+        toast({ title: "Usuario actualizado", description: "Usuario actualizado correctamente" })
         return true
       } else {
         const error = await response.json()
-        alert(`Error: ${error.error || "No se pudo actualizar"}`)
+        toast({ title: "Error al actualizar", description: error.error || "No se pudo actualizar" })
         return false
       }
     } catch (error) {
       console.error("Error al actualizar usuario:", error)
-      alert("Error al actualizar el usuario")
+      toast({ title: "Error de conexión", description: "No se pudo conectar al servidor." })
       return false
     } finally {
       setLoadingId(null)
     }
   }
+
+  // Listener para crear usuarios desde el modal (o desde anywhere)
+  useEffect(() => {
+    const handler = (e: any) => {
+      const created = e?.detail
+      if (!created) return
+
+      const name = created.nombre || created.name || created.correo || "Usuario"
+      const email = created.correo || created.email || ""
+      const rol = created.rol || created.role || (created.rol === "admin" ? "Administrador" : "Usuario")
+      const status = created.estado ? "Activo" : "Inactivo"
+
+      const initials = (() => {
+        if (name && name.trim().length > 0) {
+          const parts = name.split(" ")
+          return (parts[0][0] || "").toUpperCase() + (parts[1]?.[0] || "").toUpperCase()
+        }
+        if (email) return (email[0] || "").toUpperCase()
+        return "U"
+      })()
+
+      const newUser: User = {
+        idUsuario: created.idUsuario ?? `tmp-${Date.now()}`,
+        initials,
+        name,
+        email,
+        role: typeof rol === "string" ? (rol === "admin" ? "Administrador" : rol) : "Usuario",
+        status,
+        lastAccess: "-",
+      }
+
+      setUsers(prev => [newUser, ...prev])
+      toast({ title: "Usuario agregado", description: `${name} ha sido agregado correctamente.` })
+    }
+
+    window.addEventListener("usuarios:created", handler as EventListener)
+    return () => window.removeEventListener("usuarios:created", handler as EventListener)
+  }, [toast])
 
   return (
     <>

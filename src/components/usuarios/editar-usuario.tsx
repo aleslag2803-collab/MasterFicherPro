@@ -103,31 +103,23 @@ export default function EditUserModal({ open, onClose, usuario, onUpdate }: Edit
             />
           </div>
 
-          <div>
-            <Label>Contraseña (dejar en blanco para no cambiar)</Label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
+          
 
           <div>
             <Label>Rol</Label>
             <select className="border rounded-md p-2 w-full" value={role} onChange={(e) => setRole(e.target.value)}>
               <option value="admin">Administrador</option>
-              <option value="usuario">Usuario</option>
+              <option value="usuario">Lector</option>
             </select>
           </div>
 
-          <div>
+          {/* Solo renderizamos el modal si tenemos un usuario mapeado <div>
             <Label>Estado</Label>
             <select className="border rounded-md p-2 w-full" value={active} onChange={(e) => setActive(e.target.value)}>
               <option value="si">Activo</option>
               <option value="no">Inactivo</option>
             </select>
-          </div>
+          </div> */}
 
           {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded">{error}</div>}
         </div>
