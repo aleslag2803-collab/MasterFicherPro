@@ -1,65 +1,51 @@
-import { Building, FileText, MoreVertical, Users } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
-import { Button } from "../ui/button"
-import { Badge } from "../ui/badge"
+"use client";
 
-const organizations = [
-  {
-    id: "1",
-    name: "Acme Corp",
-    description: "Corporación principal de servicios",
-    documents: 450,
-    members: 25,
-    status: "Activa",
-  },
-  {
-    id: "2",
-    name: "Finance Dept",
-    description: "Departamento de finanzas",
-    documents: 320,
-    members: 12,
-    status: "Activa",
-  },
-  {
-    id: "3",
-    name: "Legal Dept",
-    description: "Departamento legal",
-    documents: 180,
-    members: 8,
-    status: "Activa",
-  },
-  {
-    id: "4",
-    name: "Tech Dept",
-    description: "Departamento de tecnología",
-    documents: 150,
-    members: 18,
-    status: "Activa",
-  },
-  {
-    id: "5",
-    name: "HR Dept",
-    description: "Recursos humanos",
-    documents: 134,
-    members: 6,
-    status: "Activa",
-  },
-  {
-    id: "6",
-    name: "Marketing Dept",
-    description: "Departamento de marketing",
-    documents: 98,
-    members: 10,
-    status: "Inactiva",
-  },
-]
+import { useEffect, useState } from "react";
+import { Building, FileText, MoreVertical, Users } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 
 export function OrganizationsGrid() {
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function cargar() {
+      try {
+        const res = await fetch("/api/organizacion");
+        if (!res.ok) throw new Error("Error cargando organizaciones");
+
+        const data = await res.json();
+        setOrganizations(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    cargar();
+  }, []);
+
+  if (loading) return <p className="text-center">Cargando organizaciones...</p>;
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {organizations.map((org) => (
-        <Card key={org.id}>
+        <Card key={org.idOrganizacion}>
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -67,10 +53,13 @@ export function OrganizationsGrid() {
                   <Building className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">{org.name}</CardTitle>
-                  <CardDescription className="text-xs">{org.description}</CardDescription>
+                  <CardTitle className="text-lg">{org.nombre}</CardTitle>
+                  <CardDescription className="text-xs">
+                    {org.descripcion || "Sin descripción"}
+                  </CardDescription>
                 </div>
               </div>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon">
@@ -80,32 +69,37 @@ export function OrganizationsGrid() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
                   <DropdownMenuItem>Editar</DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">Eliminar</DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive">
+                    Eliminar
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </CardHeader>
+
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <FileText className="h-4 w-4" />
                 <span>Documentos</span>
               </div>
-              <span className="font-medium">{org.documents}</span>
+              <span className="font-medium">0</span>
             </div>
+
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Users className="h-4 w-4" />
                 <span>Miembros</span>
               </div>
-              <span className="font-medium">{org.members}</span>
+              <span className="font-medium">0</span>
             </div>
+
             <div className="pt-2">
-              <Badge variant={org.status === "Activa" ? "default" : "secondary"}>{org.status}</Badge>
+              <Badge variant="default">Activa</Badge>
             </div>
           </CardContent>
         </Card>
       ))}
     </div>
-  )
+  );
 }
